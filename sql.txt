@@ -1,0 +1,122 @@
+BEGIN;
+--
+-- Create model Client
+--
+CREATE TABLE "app_client" ("nif" integer NOT NULL PRIMARY KEY, "name" varchar(64) NOT NULL, "fidelity" integer NULL, "address" varchar(128) NOT NULL, "contact" varchar(64) NULL);
+--
+-- Create model Distributor
+--
+CREATE TABLE "app_distributor" ("email" varchar(254) NOT NULL PRIMARY KEY, "contact" varchar(64) NULL, "name" varchar(128) NOT NULL);
+--
+-- Create model Product
+--
+CREATE TABLE "app_product" ("prodid" integer NOT NULL PRIMARY KEY, "name" varchar(128) NOT NULL, "brand" varchar(64) NOT NULL, "price" decimal NOT NULL, "req_cold" bool NOT NULL);
+--
+-- Create model Section
+--
+CREATE TABLE "app_section" ("sname" varchar(64) NOT NULL PRIMARY KEY, "department" varchar(64) NOT NULL);
+--
+-- Create model Order
+--
+CREATE TABLE "app_order" ("orderid" integer NOT NULL PRIMARY KEY, "ord_total" decimal NOT NULL, "ord_date" date NOT NULL, "distributor_id" varchar(254) NOT NULL REFERENCES "app_distributor" ("email") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model OrderContainsProd
+--
+CREATE TABLE "app_ordercontainsprod" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "order_qty" integer NOT NULL, "order_id" integer NOT NULL REFERENCES "app_order" ("orderid") DEFERRABLE INITIALLY DEFERRED, "product_id" integer NOT NULL REFERENCES "app_product" ("prodid") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Add field products to order
+--
+CREATE TABLE "new__app_order" ("orderid" integer NOT NULL PRIMARY KEY, "ord_total" decimal NOT NULL, "ord_date" date NOT NULL, "distributor_id" varchar(254) NOT NULL REFERENCES "app_distributor" ("email") DEFERRABLE INITIALLY DEFERRED);
+INSERT INTO "new__app_order" ("orderid", "ord_total", "ord_date", "distributor_id") SELECT "orderid", "ord_total", "ord_date", "distributor_id" FROM "app_order";
+DROP TABLE "app_order";
+ALTER TABLE "new__app_order" RENAME TO "app_order";
+CREATE INDEX "app_ordercontainsprod_order_id_40eef1f0" ON "app_ordercontainsprod" ("order_id");
+CREATE INDEX "app_ordercontainsprod_product_id_9133c889" ON "app_ordercontainsprod" ("product_id");
+CREATE INDEX "app_order_distributor_id_4adfc76d" ON "app_order" ("distributor_id");
+--
+-- Create model ProductIVA
+--
+CREATE TABLE "app_productiva" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "iva" decimal NOT NULL, "product_id" integer NOT NULL REFERENCES "app_product" ("prodid") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model Purchase
+--
+CREATE TABLE "app_purchase" ("purchid" integer NOT NULL PRIMARY KEY, "date" datetime NOT NULL, "total" decimal NOT NULL, "client_id" integer NULL REFERENCES "app_client" ("nif") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model PurchContainsProd
+--
+CREATE TABLE "app_purchcontainsprod" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "purch_qty" integer NOT NULL, "product_id" integer NOT NULL REFERENCES "app_product" ("prodid") DEFERRABLE INITIALLY DEFERRED, "purchase_id" integer NOT NULL REFERENCES "app_purchase" ("purchid") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Add field products to purchase
+--
+CREATE TABLE "new__app_purchase" ("purchid" integer NOT NULL PRIMARY KEY, "date" datetime NOT NULL, "total" decimal NOT NULL, "client_id" integer NULL REFERENCES "app_client" ("nif") DEFERRABLE INITIALLY DEFERRED);
+INSERT INTO "new__app_purchase" ("purchid", "date", "total", "client_id") SELECT "purchid", "date", "total", "client_id" FROM "app_purchase";
+DROP TABLE "app_purchase";
+ALTER TABLE "new__app_purchase" RENAME TO "app_purchase";
+CREATE INDEX "app_productiva_product_id_ec757ae2" ON "app_productiva" ("product_id");
+CREATE INDEX "app_purchcontainsprod_product_id_b9a52605" ON "app_purchcontainsprod" ("product_id");
+CREATE INDEX "app_purchcontainsprod_purchase_id_6a44fbdb" ON "app_purchcontainsprod" ("purchase_id");
+CREATE INDEX "app_purchase_client_id_dbce3eb9" ON "app_purchase" ("client_id");
+--
+-- Create model PurchPayMethod
+--
+CREATE TABLE "app_purchpaymethod" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "pay_method" varchar(32) NOT NULL, "amount" decimal NOT NULL, "purchase_id" integer NOT NULL REFERENCES "app_purchase" ("purchid") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Add field section_name to product
+--
+CREATE TABLE "new__app_product" ("prodid" integer NOT NULL PRIMARY KEY, "name" varchar(128) NOT NULL, "brand" varchar(64) NOT NULL, "price" decimal NOT NULL, "req_cold" bool NOT NULL, "section_name_id" varchar(64) NOT NULL REFERENCES "app_section" ("sname") DEFERRABLE INITIALLY DEFERRED);
+INSERT INTO "new__app_product" ("prodid", "name", "brand", "price", "req_cold", "section_name_id") SELECT "prodid", "name", "brand", "price", "req_cold", NULL FROM "app_product";
+DROP TABLE "app_product";
+ALTER TABLE "new__app_product" RENAME TO "app_product";
+CREATE INDEX "app_purchpaymethod_purchase_id_d4f7e32f" ON "app_purchpaymethod" ("purchase_id");
+CREATE INDEX "app_product_section_name_id_84d1cdc6" ON "app_product" ("section_name_id");
+--
+-- Create model Supermarket
+--
+CREATE TABLE "app_supermarket" ("id" integer NOT NULL PRIMARY KEY, "location" varchar(128) NOT NULL, "opening_time" time NOT NULL, "close_time" time NOT NULL);
+CREATE TABLE "app_supermarket_sections" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "supermarket_id" integer NOT NULL REFERENCES "app_supermarket" ("id") DEFERRABLE INITIALLY DEFERRED, "section_id" varchar(64) NOT NULL REFERENCES "app_section" ("sname") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Add field supermarket to purchase
+--
+CREATE TABLE "new__app_purchase" ("purchid" integer NOT NULL PRIMARY KEY, "date" datetime NOT NULL, "total" decimal NOT NULL, "client_id" integer NULL REFERENCES "app_client" ("nif") DEFERRABLE INITIALLY DEFERRED, "supermarket_id" integer NOT NULL REFERENCES "app_supermarket" ("id") DEFERRABLE INITIALLY DEFERRED);
+INSERT INTO "new__app_purchase" ("purchid", "date", "total", "client_id", "supermarket_id") SELECT "purchid", "date", "total", "client_id", NULL FROM "app_purchase";
+DROP TABLE "app_purchase";
+ALTER TABLE "new__app_purchase" RENAME TO "app_purchase";
+CREATE UNIQUE INDEX "app_supermarket_sections_supermarket_id_section_id_5e3aee02_uniq" ON "app_supermarket_sections" ("supermarket_id", "section_id");
+CREATE INDEX "app_supermarket_sections_supermarket_id_fbbfa4de" ON "app_supermarket_sections" ("supermarket_id");
+CREATE INDEX "app_supermarket_sections_section_id_fc1fdca4" ON "app_supermarket_sections" ("section_id");
+CREATE INDEX "app_purchase_client_id_dbce3eb9" ON "app_purchase" ("client_id");
+CREATE INDEX "app_purchase_supermarket_id_e234337b" ON "app_purchase" ("supermarket_id");
+--
+-- Add field supermarket to order
+--
+CREATE TABLE "new__app_order" ("orderid" integer NOT NULL PRIMARY KEY, "ord_total" decimal NOT NULL, "ord_date" date NOT NULL, "distributor_id" varchar(254) NOT NULL REFERENCES "app_distributor" ("email") DEFERRABLE INITIALLY DEFERRED, "supermarket_id" integer NOT NULL REFERENCES "app_supermarket" ("id") DEFERRABLE INITIALLY DEFERRED);
+INSERT INTO "new__app_order" ("orderid", "ord_total", "ord_date", "distributor_id", "supermarket_id") SELECT "orderid", "ord_total", "ord_date", "distributor_id", NULL FROM "app_order";
+DROP TABLE "app_order";
+ALTER TABLE "new__app_order" RENAME TO "app_order";
+CREATE INDEX "app_order_distributor_id_4adfc76d" ON "app_order" ("distributor_id");
+CREATE INDEX "app_order_supermarket_id_73976b3f" ON "app_order" ("supermarket_id");
+--
+-- Create model Employee
+--
+CREATE TABLE "app_employee" ("enumber" integer NOT NULL PRIMARY KEY, "name" varchar(64) NOT NULL, "role" varchar(32) NOT NULL, "salary" decimal NOT NULL, "age" integer NOT NULL, "contact" varchar(64) NOT NULL, "sex" varchar(1) NOT NULL, "supervisor_id" integer NULL REFERENCES "app_employee" ("enumber") DEFERRABLE INITIALLY DEFERRED, "supermarket_id" integer NOT NULL REFERENCES "app_supermarket" ("id") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model Warehouse
+--
+CREATE TABLE "app_warehouse" ("wnumber" integer NOT NULL PRIMARY KEY, "area" varchar(64) NOT NULL, "supermarket_id" integer NOT NULL REFERENCES "app_supermarket" ("id") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model WareHStock
+--
+CREATE TABLE "app_warehstock" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "wqty" integer NOT NULL, "product_id" integer NOT NULL REFERENCES "app_product" ("prodid") DEFERRABLE INITIALLY DEFERRED, "warehouse_id" integer NOT NULL REFERENCES "app_warehouse" ("wnumber") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Add field products to warehouse
+--
+CREATE TABLE "new__app_warehouse" ("wnumber" integer NOT NULL PRIMARY KEY, "area" varchar(64) NOT NULL, "supermarket_id" integer NOT NULL REFERENCES "app_supermarket" ("id") DEFERRABLE INITIALLY DEFERRED);
+INSERT INTO "new__app_warehouse" ("wnumber", "area", "supermarket_id") SELECT "wnumber", "area", "supermarket_id" FROM "app_warehouse";
+DROP TABLE "app_warehouse";
+ALTER TABLE "new__app_warehouse" RENAME TO "app_warehouse";
+CREATE INDEX "app_employee_supervisor_id_097444c6" ON "app_employee" ("supervisor_id");
+CREATE INDEX "app_employee_supermarket_id_dc796d15" ON "app_employee" ("supermarket_id");
+CREATE INDEX "app_warehstock_product_id_8eb4cedd" ON "app_warehstock" ("product_id");
+CREATE INDEX "app_warehstock_warehouse_id_34a0753e" ON "app_warehstock" ("warehouse_id");
+CREATE INDEX "app_warehouse_supermarket_id_72f6d657" ON "app_warehouse" ("supermarket_id");
+COMMIT;
