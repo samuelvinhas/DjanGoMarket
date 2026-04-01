@@ -1,0 +1,388 @@
+#!/usr/bin/env python
+"""
+Django Populate Script
+Populate the database with sample data from ProjetoDML.sql
+"""
+import os
+import django
+from django.utils import timezone
+from datetime import datetime, time
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DjanGoMarket.settings')
+django.setup()
+
+from app.models import (
+    Supermarket, Section, Employee, Product, ProductIVA, Client,
+    Purchase, PurchContainsProd, PurchPayMethod, Warehouse, WareHStock,
+    Order, OrderContainsProd, Distributor
+)
+
+def clear_data():
+    """Clear all data from tables"""
+    print("Clearing existing data...")
+    OrderContainsProd.objects.all().delete()
+    Order.objects.all().delete()
+    WareHStock.objects.all().delete()
+    PurchPayMethod.objects.all().delete()
+    PurchContainsProd.objects.all().delete()
+    Purchase.objects.all().delete()
+    ProductIVA.objects.all().delete()
+    Product.objects.all().delete()
+    Client.objects.all().delete()
+    Warehouse.objects.all().delete()
+    Employee.objects.all().delete()
+    Section.objects.all().delete()
+    Distributor.objects.all().delete()
+    Supermarket.objects.all().delete()
+    print("Data cleared!")
+
+def populate_supermarkets():
+    """Insert supermarkets"""
+    print("Populating supermarkets...")
+    supermarkets = [
+        Supermarket(id=1, location='Esgueira, Aveiro', opening_time=time(8, 45), close_time=time(20, 0)),
+        Supermarket(id=2, location='Arcos, Estremoz', opening_time=time(8, 0), close_time=time(22, 30)),
+        Supermarket(id=3, location='Alcochete, Lisboa', opening_time=time(8, 0), close_time=time(20, 15)),
+    ]
+    Supermarket.objects.bulk_create(supermarkets)
+    print(f"Created {len(supermarkets)} supermarkets")
+
+def populate_sections():
+    """Insert sections"""
+    print("Populating sections...")
+    sections = [
+        Section(sname='Bebidas', department='Alimentar'),
+        Section(sname='Enlatados', department='Alimentar'),
+        Section(sname='Snacks', department='Alimentar'),
+        Section(sname='Talho', department='Frescos'),
+        Section(sname='Peixaria', department='Frescos'),
+        Section(sname='Padaria', department='Frescos'),
+        Section(sname='Charcutaria', department='Frescos'),
+        Section(sname='Frutas e Legumes', department='Frescos'),
+        Section(sname='Lacteos', department='Frescos'),
+        Section(sname='Limpeza', department='Bazar'),
+        Section(sname='Higiene', department='Bazar'),
+        Section(sname='Brinquedos', department='Bazar'),
+    ]
+    Section.objects.bulk_create(sections)
+    print(f"Created {len(sections)} sections")
+
+def populate_store_sections():
+    """Associate sections to supermarkets"""
+    print("Populating store sections...")
+    supermarkets = Supermarket.objects.all()
+    sections = Section.objects.all()
+    
+    for supermarket in supermarkets:
+        supermarket.sections.add(*sections)
+    print(f"Associated sections to all supermarkets")
+
+def populate_distributors():
+    """Insert distributors"""
+    print("Populating distributors...")
+    distributors = [
+        Distributor(email='beverages@dist.pt', contact='220111222', name='Distributor Bebidas'),
+        Distributor(email='fresh@dist.pt', contact='220333444', name='Distributor Frescos'),
+        Distributor(email='bazar@dist.pt', contact='220555666', name='Distributor Bazar'),
+    ]
+    Distributor.objects.bulk_create(distributors)
+    print(f"Created {len(distributors)} distributors")
+
+def populate_employees():
+    """Insert employees"""
+    print("Populating employees...")
+    supermarkets = {s.id: s for s in Supermarket.objects.all()}
+    
+    employees_data = [
+
+        {'enumber': 1001, 'name': 'Antonio Silva', 'role': 'Gerente', 'salary': 1800.00, 'age': 42, 'contact': '910111213', 'supermarket_id': 1, 'sex': 'M', 'supervisor': None},
+        {'enumber': 1002, 'name': 'Maria Santos', 'role': 'Gerente - Caixa', 'salary': 1500.00, 'age': 36, 'contact': '920222324', 'supermarket_id': 1, 'sex': 'F', 'supervisor': 1001},
+        {'enumber': 1003, 'name': 'Miguel Ferreira', 'role': 'Caixa', 'salary': 850.00, 'age': 25, 'contact': '930333435', 'supermarket_id': 1, 'sex': 'M', 'supervisor': 1002},
+        {'enumber': 1005, 'name': 'Carlos Oliveira', 'role': 'Repositor', 'salary': 800.00, 'age': 19, 'contact': '950555657', 'supermarket_id': 1, 'sex': 'M', 'supervisor': 1001},
+
+        {'enumber': 2001, 'name': 'Carlos Almeida', 'role': 'Gerente', 'salary': 1750.00, 'age': 45, 'contact': '911121314', 'supermarket_id': 2, 'sex': 'M', 'supervisor': None},
+        {'enumber': 2002, 'name': 'Sofia Ribeiro', 'role': 'Gerente - Caixa', 'salary': 1450.00, 'age': 38, 'contact': '921222324', 'supermarket_id': 2, 'sex': 'F', 'supervisor': 2001},
+        {'enumber': 2003, 'name': 'Ricardo Martins', 'role': 'Caixa', 'salary': 830.00, 'age': 22, 'contact': '931323334', 'supermarket_id': 2, 'sex': 'M', 'supervisor': 2002},
+        {'enumber': 2005, 'name': 'Miguel Sousa', 'role': 'Repositor', 'salary': 790.00, 'age': 20, 'contact': '951525354', 'supermarket_id': 2, 'sex': 'M', 'supervisor': 2001},
+
+        {'enumber': 3001, 'name': 'Paulo Mendes', 'role': 'Gerente', 'salary': 1900.00, 'age': 47, 'contact': '912131415', 'supermarket_id': 3, 'sex': 'M', 'supervisor': None},
+        {'enumber': 3002, 'name': 'Carla Rodrigues', 'role': 'Gerente - Caixa', 'salary': 1600.00, 'age': 39, 'contact': '922232425', 'supermarket_id': 3, 'sex': 'F', 'supervisor': 3001},
+        {'enumber': 3004, 'name': 'Carlota Lopes', 'role': 'Caixa', 'salary': 870.00, 'age': 27, 'contact': '942434445', 'supermarket_id': 3, 'sex': 'F', 'supervisor': 3002},
+        {'enumber': 3005, 'name': 'Hugo Dias', 'role': 'Repositor', 'salary': 820.00, 'age': 21, 'contact': '952535455', 'supermarket_id': 3, 'sex': 'M', 'supervisor': 3001},
+        {'enumber': 3007, 'name': 'Eduardo Fernandes', 'role': 'Seguranca', 'salary': 900.00, 'age': 32, 'contact': '972737475', 'supermarket_id': 3, 'sex': 'M', 'supervisor': 3001},
+    ]
+    
+    employees = []
+    supervisor_map = {}
+    
+    # First step: create all employees without supervisors
+    for emp_data in employees_data:
+        supervisor_id = emp_data.pop('supervisor')
+        emp = Employee(
+            enumber=emp_data['enumber'],
+            name=emp_data['name'],
+            role=emp_data['role'],
+            salary=emp_data['salary'],
+            age=emp_data['age'],
+            contact=emp_data['contact'],
+            supermarket=supermarkets[emp_data['supermarket_id']],
+            sex=emp_data['sex'],
+        )
+        employees.append(emp)
+        supervisor_map[emp_data['enumber']] = supervisor_id
+    
+    Employee.objects.bulk_create(employees)
+    
+    # Second step: update supervisors
+    all_employees = {e.enumber: e for e in Employee.objects.all()}
+    for enumber, supervisor_id in supervisor_map.items():
+        if supervisor_id:
+            emp = all_employees[enumber]
+            emp.supervisor = all_employees[supervisor_id]
+            emp.save()
+    
+    print(f"Created {len(employees_data)} employees")
+
+def populate_products():
+    """Insert products"""
+    print("Populating products...")
+    sections = {s.sname: s for s in Section.objects.all()}
+    
+    products_data = [
+
+        (101, 'Cerveja Pack 6x33cl', 'Super Bock', 3.99, False, 'Bebidas'),
+        (102, 'Whisky', 'Ballantines', 15.99, False, 'Bebidas'),
+
+        (201, 'Atum em oleo 120g', 'Bom Petisco', 1.79, False, 'Enlatados'),
+        (202, 'Sardinha em Tomate 125g', 'Ramirez', 1.59, False, 'Enlatados'),
+
+        (301, 'Batatas Fritas 150g', 'Lay\'s', 1.49, False, 'Snacks'),
+        (302, 'Amendoins 200g', 'Ultje', 1.79, False, 'Snacks'),
+
+        (401, 'Bife da Vazia kg', 'Nacional', 12.99, True, 'Talho'),
+        (402, 'Frango Inteiro kg', 'Nacional', 2.99, True, 'Talho'),
+
+        (501, 'Camarao Cozido 200g', 'Nacional', 4.99, True, 'Peixaria'),
+        (502, 'Bacalhau Seco kg', 'Noruega', 15.99, False, 'Peixaria'),
+
+        (601, 'Baguete', 'Padaria Propria', 0.75, False, 'Padaria'),
+        (602, 'Croissant', 'Padaria Propria', 0.65, False, 'Padaria'),
+
+        (701, 'Fiambre Fatiado 150g', 'Nobre', 1.89, True, 'Charcutaria'),
+        (702, 'Queijo Flamengo kg', 'Terra Nostra', 7.99, True, 'Charcutaria'),
+
+        (801, 'Peras kg', 'Nacional', 1.49, False, 'Frutas e Legumes'),
+        (802, 'Bananas kg', 'Nacional', 1.29, False, 'Frutas e Legumes'),
+
+        (901, 'Iogurte Natural Pack 4', 'Danone', 1.79, True, 'Lacteos'),
+        (902, 'Manteiga 250g', 'Presidente', 2.19, True, 'Lacteos'),
+
+        (1101, 'Amaciador 1.5L', 'Comfort', 3.29, False, 'Limpeza'),
+        (1102, 'Papel Higienico 12 rolos', 'Renova', 3.49, False, 'Limpeza'),
+
+        (1201, 'Pasta de Dentes 75ml', 'Colgate', 2.19, False, 'Higiene'),
+        (1202, 'Desodorizante Roll-on', 'Nivea', 2.39, False, 'Higiene'),
+
+        (1301, 'Jogo de Tabuleiro', 'Monopoly', 29.99, False, 'Brinquedos'),
+        (1302, 'Peluche Urso 25cm', 'TY', 14.99, False, 'Brinquedos'),
+    ]
+    
+    products = [
+        Product(
+            prodid=p[0],
+            name=p[1],
+            brand=p[2],
+            price=p[3],
+            req_cold=p[4],
+            section_name=sections[p[5]]
+        )
+        for p in products_data
+    ]
+    Product.objects.bulk_create(products)
+    print(f"Created {len(products)} products")
+
+def populate_product_iva():
+    """Insert product IVA records"""
+    print("Populating product IVA...")
+    products = Product.objects.all()
+    
+    iva_records = [ProductIVA(product=product, iva=0.23) for product in products]
+    ProductIVA.objects.bulk_create(iva_records)
+    print(f"Created {len(iva_records)} product IVA records")
+
+def populate_clients():
+    """Insert clients"""
+    print("Populating clients...")
+    clients = [
+        Client(nif=123456789, name='Maria Oliveira', fidelity=3, address='Rua das Flores 123, Aveiro', contact='912345678'),
+        Client(nif=234567890, name='Joao Silva', fidelity=2, address='Avenida Central 456, Aveiro', contact='923456789'),
+        Client(nif=345678901, name='Ana Santos', fidelity=5, address='Rua da Republica 78, Estremoz', contact='934567890'),
+        Client(nif=456789012, name='Pedro Costa', fidelity=1, address='Rua dos Pescadores 90, Alcochete', contact='945678901'),
+        Client(nif=567890123, name='Sofia Pereira', fidelity=4, address='Avenida da Liberdade 234, Lisboa', contact='956789012'),
+        Client(nif=678901234, name='Miguel Ferreira', fidelity=2, address='Rua Nova 567, Aveiro', contact='967890123'),
+        Client(nif=789012345, name='Carla Martins', fidelity=0, address='Rua do Comercio 890, Estremoz', contact='978901234'),
+        Client(nif=890123456, name='Ricardo Almeida', fidelity=3, address='Avenida do Mar 123, Lisboa', contact='989012345'),
+        Client(nif=901234567, name='Teresa Sousa', fidelity=4, address='Rua das Oliveiras 45, Aveiro', contact='990123456'),
+        Client(nif=112233445, name='Paulo Rodrigues', fidelity=2, address='Rua Central 67, Lisboa', contact='911223344'),
+    ]
+    Client.objects.bulk_create(clients)
+    print(f"Created {len(clients)} clients")
+
+def populate_warehouses():
+    """Insert warehouses"""
+    print("Populating warehouses...")
+    supermarkets = {s.id: s for s in Supermarket.objects.all()}
+    
+    warehouses = [
+        Warehouse(wnumber=1, area='Armazem Aveiro', supermarket=supermarkets[1]),
+        Warehouse(wnumber=2, area='Armazem Estremoz', supermarket=supermarkets[2]),
+        Warehouse(wnumber=3, area='Armazem Lisboa', supermarket=supermarkets[3]),
+    ]
+    Warehouse.objects.bulk_create(warehouses)
+    print(f"Created {len(warehouses)} warehouses")
+
+def populate_warehouse_stock():
+    """Insert warehouse stock"""
+    print("Populating warehouse stock...")
+    warehouses = {w.wnumber: w for w in Warehouse.objects.all()}
+    products = {p.prodid: p for p in Product.objects.all()}
+    
+    stock_data = [
+        (1, 101, 50), (1, 102, 30), (1, 201, 100), (1, 202, 80),
+        (1, 301, 120), (1, 302, 150), (1, 401, 40), (1, 402, 60),
+        (2, 501, 25), (2, 502, 35), (2, 601, 200), (2, 602, 180),
+        (2, 701, 50), (2, 702, 30), (2, 801, 100), (2, 802, 120),
+        (3, 901, 75), (3, 902, 50), (3, 1101, 100), (3, 1102, 90),
+        (3, 1201, 80), (3, 1202, 95), (3, 1301, 15), (3, 1302, 20),
+    ]
+    
+    stock = [
+        WareHStock(warehouse=warehouses[s[0]], product=products[s[1]], wqty=s[2])
+        for s in stock_data
+    ]
+    WareHStock.objects.bulk_create(stock)
+    print(f"Created {len(stock)} warehouse stock records")
+
+def populate_purchases():
+    """Insert purchases"""
+    print("Populating purchases...")
+    supermarkets = {s.id: s for s in Supermarket.objects.all()}
+    clients = {c.nif: c for c in Client.objects.all()}
+    
+    purchases_data = [
+        (1001, '2025-05-10 10:30:00', 7.98, 1, 123456789),
+        (1002, '2025-05-11 14:15:00', 29.76, 1, 234567890),
+        (1003, '2025-05-13 09:00:00', 17.78, 1, None),
+        (1004, '2025-05-14 16:45:00', 15.55, 1, 901234567),
+        (1005, '2025-05-16 11:20:00', 1.95, 1, None),
+        (2001, '2025-05-16 10:00:00', 33.47, 2, 345678901),
+        (2002, '2025-05-16 15:30:00', 8.86, 2, None),
+        (2003, '2025-05-13 13:00:00', 28.98, 2, 789012345),
+        (2004, '2025-05-11 09:15:00', 7.36, 2, None),
+        (2005, '2025-05-29 12:00:00', 44.98, 2, 345678901),
+        (3001, '2025-05-29 10:30:00', 20.98, 3, 456789012),
+        (3002, '2025-05-29 14:00:00', 10.96, 3, None),
+        (3003, '2025-05-29 11:45:00', 44.98, 3, 567890123),
+        (3004, '2025-05-27 16:20:00', 20.36, 3, 890123456),
+        (3005, '2025-05-22 09:50:00', 10.66, 3, None),
+    ]
+    
+    purchases = [
+        Purchase(
+            purchid=p[0],
+            date=datetime.strptime(p[1], '%Y-%m-%d %H:%M:%S'),
+            total=p[2],
+            supermarket=supermarkets[p[3]],
+            client=clients.get(p[4])
+        )
+        for p in purchases_data
+    ]
+    Purchase.objects.bulk_create(purchases)
+    print(f"Created {len(purchases)} purchases")
+
+def populate_purchase_items():
+    """Insert purchase items"""
+    print("Populating purchase items...")
+    purchases = {p.purchid: p for p in Purchase.objects.all()}
+    products = {p.prodid: p for p in Product.objects.all()}
+    
+    purchase_items_data = [
+        (1001, 101, 2),
+        (1002, 401, 2), (1002, 701, 2),
+        (1003, 102, 1), (1003, 201, 1),
+        (1004, 101, 3), (1004, 201, 2),
+        (1005, 602, 3),
+        (2001, 102, 2), (2001, 301, 1),
+        (2002, 501, 1), (2002, 802, 3),
+        (2003, 401, 1), (2003, 502, 1),
+        (2004, 701, 2), (2004, 901, 2),
+        (2005, 1301, 1), (2005, 1302, 1),
+        (3001, 102, 1), (3001, 501, 1),
+        (3002, 1101, 2), (3002, 1201, 2),
+        (3003, 1301, 1), (3003, 1302, 1),
+        (3004, 702, 2), (3004, 902, 2),
+        (3005, 1102, 1), (3005, 1202, 3),
+    ]
+    
+    purchase_items = [
+        PurchContainsProd(purchase=purchases[item[0]], product=products[item[1]], purch_qty=item[2])
+        for item in purchase_items_data
+    ]
+    PurchContainsProd.objects.bulk_create(purchase_items)
+    print(f"Created {len(purchase_items)} purchase items")
+
+def populate_purchase_payment_methods():
+    """Insert purchase payment methods"""
+    print("Populating purchase payment methods...")
+    purchases = {p.purchid: p for p in Purchase.objects.all()}
+    
+    payment_data = [
+        (1001, 'Cartao', 7.98),
+        (1002, 'Cartao', 29.76),
+        (1003, 'Dinheiro', 17.78),
+        (1004, 'Cartao', 15.55),
+        (1005, 'Dinheiro', 1.95),
+        (2001, 'Cartao', 33.47),
+        (2002, 'Cartao', 8.86),
+        (2003, 'Cartao', 28.98),
+        (2004, 'Dinheiro', 7.36),
+        (2005, 'Cartao', 44.98),
+        (3001, 'Cartao', 20.98),
+        (3002, 'Dinheiro', 10.96),
+        (3003, 'Cartao', 44.98),
+        (3004, 'Cartao', 20.36),
+        (3005, 'Cartao', 10.66),
+    ]
+    
+    payment_methods = [
+        PurchPayMethod(purchase=purchases[p[0]], pay_method=p[1], amount=p[2])
+        for p in payment_data
+    ]
+    PurchPayMethod.objects.bulk_create(payment_methods)
+    print(f"Created {len(payment_methods)} payment methods")
+
+def populate():
+    """Main populate function"""
+    print("Starting database population...")
+    try:
+        clear_data()
+        populate_supermarkets()
+        populate_sections()
+        populate_store_sections()
+        populate_distributors()
+        populate_employees()
+        populate_products()
+        populate_product_iva()
+        populate_clients()
+        populate_warehouses()
+        populate_warehouse_stock()
+        populate_purchases()
+        populate_purchase_items()
+        populate_purchase_payment_methods()
+        print("\nDatabase population completed successfully!")
+    except Exception as e:
+        print(f"Error during population: {e}")
+        raise
+
+if __name__ == '__main__':
+    populate()
