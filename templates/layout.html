@@ -20,7 +20,7 @@
         .nav-link { color: rgba(255, 255, 255, 0.8) !important; font-weight: 500; transition: color 0.2s; }
         .nav-link:hover { color: #fff !important; }
         .nav-link.active { font-weight: 700; opacity: 1; color: #8bda4b !important; position: relative; }
-        .nav-link.active::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 20px; height: 2px; background-color: #8bda4b; border-radius: 2px; }
+        .nav-link.active:not(.dropdown-toggle)::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 20px; height: 2px; background-color: #8bda4b; border-radius: 2px; }
 
         .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); margin-bottom: 30px; }
         .card-header { background-color: white; border-bottom: 2px solid #f1f3f5; padding: 1.5rem 1.5rem 1rem; border-radius: 12px 12px 0 0 !important; }
