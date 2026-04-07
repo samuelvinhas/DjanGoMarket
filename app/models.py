@@ -64,40 +64,30 @@ class Client(models.Model):
     name = models.CharField(max_length=64, blank=True)
     fidelity = models.IntegerField(null=True, blank=True)
     address = models.CharField(max_length=128, blank=True)
-    contact = models.CharField(max_length=64, null=True, blank=True)
+    contact = models.CharField(max_length=64, blank=True)
     def __str__(self):
         return self.name or f"Client {self.nif}"
 
 class Purchase(models.Model):
     purchid = models.IntegerField(primary_key=True)
     date = models.DateTimeField()
-    total = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
     supermarket = models.ForeignKey(Supermarket, on_delete=models.CASCADE)
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
-    products = models.ManyToManyField(Product, through='PurchContainsProd')
+    products = models.ManyToManyField(Product, through='PurchaseItem')
     def __str__(self):
         return f"Purchase {self.purchid}"
     @property
     def calculated_total(self):
-        return sum(item.product.price * item.purch_qty for item in self.purchcontainsprod_set.all())
-
-class ProductIVA(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    iva = models.DecimalField(max_digits=3, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(1)])
-    def __str__(self):
-        return f"{self.product.name} - IVA: {self.iva}"
-
-class PurchPayMethod(models.Model):
-    purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE)
-    pay_method = models.CharField(max_length=32)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
-    def __str__(self):
-        return f"{self.purchase.purchid} - {self.pay_method}"
-
-class PurchContainsProd(models.Model):
+        result = self.purchaseitem_set.aggregate(
+                total_cost=models.Sum(models.F('quantity') * models.F('price_at_purchase'))
+            )
+        return result['total_cost'] or 0.00
+    
+class PurchaseItem(models.Model):
     purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    purch_qty = models.IntegerField(validators=[MinValueValidator(1)])
+    quantity = models.IntegerField(validators=[MinValueValidator(1)])
+    price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
     def __str__(self):
         return f"{self.purchase.purchid} - {self.product.name}"
 
@@ -114,13 +104,13 @@ class Order(models.Model):
     ord_date = models.DateField()
     supermarket = models.ForeignKey(Supermarket, on_delete=models.CASCADE)
     distributor = models.ForeignKey(Distributor, on_delete=models.CASCADE)
-    products = models.ManyToManyField(Product, through='OrderContainsProd')
+    products = models.ManyToManyField(Product, through='OrderItem')
     def __str__(self):
         return f"Order {self.orderid}"
 
-class OrderContainsProd(models.Model):
+class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    order_qty = models.IntegerField(validators=[MinValueValidator(1)])
+    quantity = models.IntegerField(validators=[MinValueValidator(1)])
     def __str__(self):
         return f"{self.order.orderid} - {self.product.name}"
