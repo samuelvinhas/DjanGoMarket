@@ -1,0 +1,42 @@
+{% extends 'layout.html' %}
+{% block title %}Supplier Network - DjanGoMarket{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-building text-muted me-2" style="font-size: 1.5rem;"></i>Supplier Network</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th width="30%">Company Name</th>
+                        <th>Email Address</th>
+                        <th>Contact Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in distributors %}
+                    <tr>
+                        <td class="fw-semibold text-dark"><i class="bi bi-building me-2 text-muted"></i>{{ item.name }}</td>
+                        <td><a href="mailto:{{ item.email }}" class="text-decoration-none"><i class="bi bi-envelope me-2 text-muted"></i>{{ item.email }}</a></td>
+                        <td class="text-muted"><i class="bi bi-telephone me-2"></i>{{ item.contact|default:"-"|safe }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-5 border-0">
+                            <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                            <h5 class="fw-normal">No distributors found</h5>
+                            <p class="small">There are currently no records available in this section.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

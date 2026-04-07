@@ -26,7 +26,6 @@ Our application serves as a hub for managing supermarket operations including:
   - `Distributor` - Supplier information
   - `Client` - Customer data with fidelity program tracking
   - `Purchase` - Transaction management with multiple payment methods
-  - `ProductIVA` - Tax management per product
   - Additional junction models for M:N relationships with attributes
 
 ### 2. Django Admin Interface

@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+{% block title %}Supermarkets - DjanGoMarket{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-shop text-muted me-2" style="font-size: 1.5rem;"></i>Supermarkets</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th width="10%">ID</th>
+                        <th>Location</th>
+                        <th>Opening</th>
+                        <th>Closing</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in supermarkets %}
+                    <tr>
+                        <td class="text-muted">#{{ item.id }}</td>
+                        <td class="fw-semibold text-dark">{{ item.location }}</td>
+                        <td><i class="bi bi-clock text-muted me-2"></i>{{ item.opening_time|time:"H:i" }}</td>
+                        <td><i class="bi bi-clock text-muted me-2"></i>{{ item.close_time|time:"H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-5 border-0">
+                            <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                            <h5 class="fw-normal">No supermarkets found</h5>
+                            <p class="small">There are currently no records available in this section.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
