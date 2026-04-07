@@ -30,4 +30,14 @@ urlpatterns = [
     path('clients/', views.client_list, name='client_list'),
     path('purchases/', views.purchase_list, name='purchase_list'),
     path('orders/', views.order_list, name='order_list'),
+
+    path('supermarkets/add/', views.supermarket_create, name='supermarket_create'),
+    path('sections/add/', views.section_create, name='section_create'),
+    path('employees/add/', views.employee_create, name='employee_create'),
+    path('products/add/', views.product_create, name='product_create'),
+    path('warehouses/add/', views.warehouse_create, name='warehouse_create'),
+    path('distributors/add/', views.distributor_create, name='distributor_create'),
+    path('clients/add/', views.client_create, name='client_create'),
+    path('purchases/add/', views.purchase_create, name='purchase_create'),
+    path('orders/add/', views.order_create, name='order_create'),
 ]
