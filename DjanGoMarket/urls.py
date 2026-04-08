@@ -40,4 +40,9 @@ urlpatterns = [
     path('clients/add/', views.client_create, name='client_create'),
     path('purchases/add/', views.purchase_create, name='purchase_create'),
     path('orders/add/', views.order_create, name='order_create'),
+
+    path('products/<int:pk>/', views.product_detail, name='product_detail'),
+    path('sections/<str:pk>/', views.section_detail, name='section_detail'),
+    path('supermarkets/<int:pk>/', views.supermarket_detail, name='supermarket_detail'),
+    path('warehouses/<int:pk>/', views.warehouse_detail, name='warehouse_detail'),
 ]

@@ -15,6 +15,8 @@ body { font-family: 'Inter', sans-serif; background-color: #f4f6f8; color: #333;
 .table td { padding: 1rem 1.5rem; vertical-align: middle; border-bottom: 1px solid #f1f3f5; color: #495057; font-size: 0.95rem; }
 .table tbody tr:last-child td { border-bottom: none; }
 .table tbody tr:hover { background-color: #f8f9fa; }
+.table tbody tr.table-row-link { cursor: pointer; }
+.table tbody tr.table-row-link:hover { background-color: #eef7e4; }
 .badge { font-weight: 500; padding: 0.5em 0.75em; border-radius: 6px; }
 .main-content { padding-top: 40px; padding-bottom: 60px; }
 

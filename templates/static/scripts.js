@@ -1,4 +1,17 @@
 document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function (e) {
+        const row = e.target.closest('tr.table-row-link[data-href]');
+        if (!row || e.target.closest('a, button, input, select, textarea')) return;
+        window.location.href = row.getAttribute('data-href');
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const row = e.target.closest('tr.table-row-link[data-href]');
+        if (!row || e.target.closest('a, button')) return;
+        e.preventDefault();
+        window.location.href = row.getAttribute('data-href');
+    });
+
     document.addEventListener('mousedown', function(e) {
         if (e.target.tagName === 'OPTION' && e.target.parentElement.hasAttribute('multiple')) {
             e.preventDefault();

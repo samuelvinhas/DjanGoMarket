@@ -26,16 +26,16 @@
             </button>
             <div class="collapse navbar-collapse" id="navCollapse">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'supermarket_list' %}active{% endif %}" href="{% url 'supermarket_list' %}">Supermarkets</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'supermarket_list' or request.resolver_match.url_name == 'supermarket_detail' %}active{% endif %}" href="{% url 'supermarket_list' %}">Supermarkets</a></li>
                     <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'employee_list' %}active{% endif %}" href="{% url 'employee_list' %}">Employees</a></li>
-                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}" href="{% url 'product_list' %}">Products</a></li>
-                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'warehouse_list' %}active{% endif %}" href="{% url 'warehouse_list' %}">Warehouses</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'product_list' or request.resolver_match.url_name == 'product_detail' %}active{% endif %}" href="{% url 'product_list' %}">Products</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'warehouse_list' or request.resolver_match.url_name == 'warehouse_detail' %}active{% endif %}" href="{% url 'warehouse_list' %}">Warehouses</a></li>
                     <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'purchase_list' %}active{% endif %}" href="{% url 'purchase_list' %}">Purchases</a></li>
                     <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'order_list' %}active{% endif %}" href="{% url 'order_list' %}">Orders</a></li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if request.resolver_match.url_name in 'section_list distributor_list client_list' %}active{% endif %}" href="#" data-bs-toggle="dropdown">More</a>
+                        <a class="nav-link dropdown-toggle {% if request.resolver_match.url_name == 'section_list' or request.resolver_match.url_name == 'section_detail' or request.resolver_match.url_name == 'distributor_list' or request.resolver_match.url_name == 'client_list' %}active{% endif %}" href="#" data-bs-toggle="dropdown">More</a>
                         <ul class="dropdown-menu border-0 shadow-sm mt-2">
-                            <li><a class="dropdown-item py-2 {% if request.resolver_match.url_name == 'section_list' %}fw-bold bg-light{% endif %}" href="{% url 'section_list' %}">Sections</a></li>
+                            <li><a class="dropdown-item py-2 {% if request.resolver_match.url_name == 'section_list' or request.resolver_match.url_name == 'section_detail' %}fw-bold bg-light{% endif %}" href="{% url 'section_list' %}">Sections</a></li>
                             <li><a class="dropdown-item py-2 {% if request.resolver_match.url_name == 'distributor_list' %}fw-bold bg-light{% endif %}" href="{% url 'distributor_list' %}">Distributors</a></li>
                             <li><a class="dropdown-item py-2 {% if request.resolver_match.url_name == 'client_list' %}fw-bold bg-light{% endif %}" href="{% url 'client_list' %}">Clients</a></li>
                         </ul>

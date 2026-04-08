@@ -1,5 +1,16 @@
-from django.shortcuts import render, redirect
-from .models import Supermarket, Section, Employee, Product, Warehouse, Distributor, Client, Purchase, Order
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import (
+    Supermarket,
+    Section,
+    Employee,
+    Product,
+    Warehouse,
+    Distributor,
+    Client,
+    Purchase,
+    Order,
+    WareHStock,
+)
 from .forms import SupermarketForm, SectionForm, EmployeeForm, ProductForm, WarehouseForm, DistributorForm, ClientForm, PurchaseForm, OrderForm
 
 def home(request):
@@ -18,11 +29,11 @@ def employee_list(request):
     return render(request, 'employee_list.html', {'employees': employees})
 
 def product_list(request):
-    products = Product.objects.all()
+    products = Product.objects.select_related('section_name').all()
     return render(request, 'product_list.html', {'products': products})
 
 def warehouse_list(request):
-    warehouses = Warehouse.objects.all()
+    warehouses = Warehouse.objects.select_related('supermarket').all()
     return render(request, 'warehouse_list.html', {'warehouses': warehouses})
 
 def distributor_list(request):
@@ -158,12 +169,13 @@ def supermarket_detail(request, pk):
     return render(request, 'generic_detail.html', {'title': 'Supermarket Details', 'icon': 'bi-shop', 'list_url': 'supermarket_list', 'fields': fields})
 
 def section_detail(request, pk):
-    item = get_object_or_404(Section, pk=pk)
-    fields = {
-        'Name': item.sname,
-        'Department': item.department
-    }
-    return render(request, 'generic_detail.html', {'title': 'Section Details', 'icon': 'bi-tags', 'list_url': 'section_list', 'fields': fields})
+    section = get_object_or_404(Section, pk=pk)
+    products = Product.objects.filter(section_name=section).order_by('name')
+    return render(
+        request,
+        'section_detail.html',
+        {'section': section, 'products': products},
+    )
 
 def employee_detail(request, pk):
     item = get_object_or_404(Employee, pk=pk)
@@ -181,26 +193,39 @@ def employee_detail(request, pk):
     return render(request, 'generic_detail.html', {'title': 'Employee Details', 'icon': 'bi-person-badge', 'list_url': 'employee_list', 'fields': fields})
 
 def product_detail(request, pk):
-    item = get_object_or_404(Product, pk=pk)
-    fields = {
-        'Product ID': item.prodid,
-        'Name': item.name,
-        'Brand': item.brand,
-        'Price': f"{item.price} €",
-        'Requires Cold Storage': 'Yes' if item.req_cold else 'No',
-        'Section': item.section_name.sname
-    }
-    return render(request, 'generic_detail.html', {'title': 'Product Details', 'icon': 'bi-box-seam', 'list_url': 'product_list', 'fields': fields})
+    product = get_object_or_404(
+        Product.objects.select_related('section_name'),
+        pk=pk,
+    )
+    stock_rows = (
+        WareHStock.objects.filter(product=product)
+        .select_related('warehouse', 'warehouse__supermarket')
+        .order_by('warehouse__wnumber')
+    )
+    return render(
+        request,
+        'product_detail.html',
+        {
+            'product': product,
+            'stock_rows': stock_rows,
+        },
+    )
 
 def warehouse_detail(request, pk):
-    item = get_object_or_404(Warehouse, pk=pk)
-    fields = {
-        'Warehouse Number': item.wnumber,
-        'Area': item.area,
-        'Supermarket': item.supermarket.location,
-        'Products Included': ", ".join([p.name for p in item.products.all()]) or 'None'
-    }
-    return render(request, 'generic_detail.html', {'title': 'Warehouse Details', 'icon': 'bi-boxes', 'list_url': 'warehouse_list', 'fields': fields})
+    warehouse = get_object_or_404(
+        Warehouse.objects.select_related('supermarket'),
+        pk=pk,
+    )
+    stock_rows = (
+        WareHStock.objects.filter(warehouse=warehouse)
+        .select_related('product', 'product__section_name')
+        .order_by('product__name')
+    )
+    return render(
+        request,
+        'warehouse_detail.html',
+        {'warehouse': warehouse, 'stock_rows': stock_rows},
+    )
 
 def distributor_detail(request, pk):
     item = get_object_or_404(Distributor, pk=pk)
