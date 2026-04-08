@@ -5,7 +5,7 @@ Populate the database with sample data from ProjetoDML.sql
 """
 import os
 import django
-from django.utils import timezone
+from django.contrib.auth.hashers import make_password
 from datetime import datetime, time
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DjanGoMarket.settings')
@@ -89,6 +89,7 @@ def populate_distributors():
 def populate_employees():
     """Insert employees"""
     print("Populating employees...")
+    
     supermarkets = {s.id: s for s in Supermarket.objects.all()}
     
     employees_data = [
@@ -115,7 +116,10 @@ def populate_employees():
     # First step: create all employees without supervisors
     for emp_data in employees_data:
         supervisor_id = emp_data.pop('supervisor')
+        username = f"{emp_data['enumber']}"
         emp = Employee(
+            username=username,
+            password=make_password('password123'),
             enumber=emp_data['enumber'],
             name=emp_data['name'],
             role=emp_data['role'],

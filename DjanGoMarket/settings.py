@@ -126,3 +126,11 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATICFILES_DIRS = [BASE_DIR / 'templates' / 'static']
+
+# Use Employee model for authentication
+AUTH_USER_MODEL = 'app.Employee'
+
+# Redirect URLs after login/logout
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home' 
+LOGOUT_REDIRECT_URL = 'home'

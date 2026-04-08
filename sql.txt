@@ -88,7 +88,9 @@ CREATE INDEX "app_order_supermarket_id_73976b3f" ON "app_order" ("supermarket_id
 --
 -- Create model Employee
 --
-CREATE TABLE "app_employee" ("enumber" integer NOT NULL PRIMARY KEY, "name" varchar(64) NOT NULL, "role" varchar(32) NOT NULL, "salary" decimal NOT NULL, "age" integer NOT NULL, "contact" varchar(64) NOT NULL, "sex" varchar(1) NOT NULL, "supervisor_id" integer NULL REFERENCES "app_employee" ("enumber") DEFERRABLE INITIALLY DEFERRED, "supermarket_id" integer NOT NULL REFERENCES "app_supermarket" ("id") DEFERRABLE INITIALLY DEFERRED);
+CREATE TABLE "app_employee" ("password" varchar(128) NOT NULL, "last_login" datetime NULL, "is_superuser" bool NOT NULL, "username" varchar(150) NOT NULL UNIQUE, "first_name" varchar(150) NOT NULL, "last_name" varchar(150) NOT NULL, "email" varchar(254) NOT NULL, "is_staff" bool NOT NULL, "is_active" bool NOT NULL, "date_joined" datetime NOT NULL, "enumber" integer NOT NULL PRIMARY KEY, "name" varchar(64) NOT NULL, "role" varchar(32) NOT NULL, "salary" decimal NOT NULL, "age" integer NOT NULL, "contact" varchar(64) NOT NULL, "sex" varchar(1) NOT NULL, "supervisor_id" integer NULL REFERENCES "app_employee" ("enumber") DEFERRABLE INITIALLY DEFERRED, "supermarket_id" integer NOT NULL REFERENCES "app_supermarket" ("id") DEFERRABLE INITIALLY DEFERRED);
+CREATE TABLE "app_employee_groups" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "employee_id" integer NOT NULL REFERENCES "app_employee" ("enumber") DEFERRABLE INITIALLY DEFERRED, "group_id" integer NOT NULL REFERENCES "auth_group" ("id") DEFERRABLE INITIALLY DEFERRED);
+CREATE TABLE "app_employee_user_permissions" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "employee_id" integer NOT NULL REFERENCES "app_employee" ("enumber") DEFERRABLE INITIALLY DEFERRED, "permission_id" integer NOT NULL REFERENCES "auth_permission" ("id") DEFERRABLE INITIALLY DEFERRED);
 --
 -- Create model Warehouse
 --
@@ -106,6 +108,12 @@ DROP TABLE "app_warehouse";
 ALTER TABLE "new__app_warehouse" RENAME TO "app_warehouse";
 CREATE INDEX "app_employee_supervisor_id_097444c6" ON "app_employee" ("supervisor_id");
 CREATE INDEX "app_employee_supermarket_id_dc796d15" ON "app_employee" ("supermarket_id");
+CREATE UNIQUE INDEX "app_employee_groups_employee_id_group_id_162ec916_uniq" ON "app_employee_groups" ("employee_id", "group_id");
+CREATE INDEX "app_employee_groups_employee_id_1d70248a" ON "app_employee_groups" ("employee_id");
+CREATE INDEX "app_employee_groups_group_id_81ce5149" ON "app_employee_groups" ("group_id");
+CREATE UNIQUE INDEX "app_employee_user_permissions_employee_id_permission_id_31a061f5_uniq" ON "app_employee_user_permissions" ("employee_id", "permission_id");
+CREATE INDEX "app_employee_user_permissions_employee_id_9a27cd57" ON "app_employee_user_permissions" ("employee_id");
+CREATE INDEX "app_employee_user_permissions_permission_id_45fd3e03" ON "app_employee_user_permissions" ("permission_id");
 CREATE INDEX "app_warehstock_product_id_8eb4cedd" ON "app_warehstock" ("product_id");
 CREATE INDEX "app_warehstock_warehouse_id_34a0753e" ON "app_warehstock" ("warehouse_id");
 CREATE INDEX "app_warehouse_supermarket_id_72f6d657" ON "app_warehouse" ("supermarket_id");

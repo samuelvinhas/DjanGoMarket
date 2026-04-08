@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from .models import (
     Supermarket,
     Section,
@@ -13,45 +14,66 @@ from .models import (
 )
 from .forms import SupermarketForm, SectionForm, EmployeeForm, ProductForm, WarehouseForm, DistributorForm, ClientForm, PurchaseForm, OrderForm
 
+def role_required(allowed_roles=[]):
+    def decorator(view_func):
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('login')
+            if request.user.role not in allowed_roles:
+                return render(request, '403.html', status=403)
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
 def home(request):
     return render(request, 'home.html')
 
+@login_required
 def supermarket_list(request):
     supermarkets = Supermarket.objects.all()
     return render(request, 'supermarket_list.html', {'supermarkets': supermarkets})
 
+@login_required
 def section_list(request):
     sections = Section.objects.all()
     return render(request, 'section_list.html', {'sections': sections})
 
+@login_required
 def employee_list(request):
     employees = Employee.objects.all()
     return render(request, 'employee_list.html', {'employees': employees})
 
+@login_required
 def product_list(request):
     products = Product.objects.select_related('section_name').all()
     return render(request, 'product_list.html', {'products': products})
 
+@login_required
 def warehouse_list(request):
     warehouses = Warehouse.objects.select_related('supermarket').all()
     return render(request, 'warehouse_list.html', {'warehouses': warehouses})
 
+@login_required
 def distributor_list(request):
     distributors = Distributor.objects.all()
     return render(request, 'distributor_list.html', {'distributors': distributors})
 
+@login_required
 def client_list(request):
     clients = Client.objects.all()
     return render(request, 'client_list.html', {'clients': clients})
 
+@login_required
 def purchase_list(request):
     purchases = Purchase.objects.all()
     return render(request, 'purchase_list.html', {'purchases': purchases})
 
+@login_required
 def order_list(request):
     orders = Order.objects.all()
     return render(request, 'order_list.html', {'orders': orders})
 
+@login_required
 def supermarket_create(request):
     if request.method == 'POST':
         form = SupermarketForm(request.POST)
@@ -65,6 +87,8 @@ def supermarket_create(request):
         form = SupermarketForm()
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Supermarket', 'icon': 'bi-shop', 'list_url': 'supermarket_list'})
 
+@login_required
+@role_required(allowed_roles=['CEO'])
 def section_create(request):
     if request.method == 'POST':
         form = SectionForm(request.POST)
@@ -75,6 +99,8 @@ def section_create(request):
         form = SectionForm()
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Section', 'icon': 'bi-tags', 'list_url': 'section_list'})
 
+@login_required
+@role_required(allowed_roles=['CEO', 'Manager'])
 def employee_create(request):
     if request.method == 'POST':
         form = EmployeeForm(request.POST)
@@ -85,6 +111,8 @@ def employee_create(request):
         form = EmployeeForm()
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Employee', 'icon': 'bi-person-badge', 'list_url': 'employee_list'})
 
+@login_required
+@role_required(allowed_roles=['CEO'])
 def product_create(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
@@ -95,6 +123,8 @@ def product_create(request):
         form = ProductForm()
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Product', 'icon': 'bi-box-seam', 'list_url': 'product_list'})
 
+@login_required
+@role_required(allowed_roles=['CEO', 'Manager'])
 def warehouse_create(request):
     if request.method == 'POST':
         form = WarehouseForm(request.POST)
@@ -109,6 +139,8 @@ def warehouse_create(request):
         form = WarehouseForm()
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Warehouse', 'icon': 'bi-boxes', 'list_url': 'warehouse_list'})
 
+@login_required
+@role_required(allowed_roles=['CEO', 'Manager'])
 def distributor_create(request):
     if request.method == 'POST':
         form = DistributorForm(request.POST)
@@ -119,6 +151,7 @@ def distributor_create(request):
         form = DistributorForm()
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Distributor', 'icon': 'bi-building', 'list_url': 'distributor_list'})
 
+@login_required
 def client_create(request):
     if request.method == 'POST':
         form = ClientForm(request.POST)
@@ -129,6 +162,7 @@ def client_create(request):
         form = ClientForm()
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Client', 'icon': 'bi-emoji-smile', 'list_url': 'client_list'})
 
+@login_required
 def purchase_create(request):
     if request.method == 'POST':
         form = PurchaseForm(request.POST)
@@ -143,6 +177,8 @@ def purchase_create(request):
         form = PurchaseForm()
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Purchase', 'icon': 'bi-receipt', 'list_url': 'purchase_list'})
 
+@login_required
+@role_required(allowed_roles=['CEO', 'Manager'])
 def order_create(request):
     if request.method == 'POST':
         form = OrderForm(request.POST)
@@ -157,6 +193,7 @@ def order_create(request):
         form = OrderForm()
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Order', 'icon': 'bi-truck', 'list_url': 'order_list'})
 
+@login_required
 def supermarket_detail(request, pk):
     item = get_object_or_404(Supermarket, pk=pk)
     fields = {
@@ -168,6 +205,7 @@ def supermarket_detail(request, pk):
     }
     return render(request, 'generic_detail.html', {'title': 'Supermarket Details', 'icon': 'bi-shop', 'list_url': 'supermarket_list', 'fields': fields})
 
+@login_required
 def section_detail(request, pk):
     section = get_object_or_404(Section, pk=pk)
     products = Product.objects.filter(section_name=section).order_by('name')
@@ -177,6 +215,7 @@ def section_detail(request, pk):
         {'section': section, 'products': products},
     )
 
+@login_required
 def employee_detail(request, pk):
     item = get_object_or_404(Employee, pk=pk)
     fields = {
@@ -192,6 +231,7 @@ def employee_detail(request, pk):
     }
     return render(request, 'generic_detail.html', {'title': 'Employee Details', 'icon': 'bi-person-badge', 'list_url': 'employee_list', 'fields': fields})
 
+@login_required
 def product_detail(request, pk):
     product = get_object_or_404(
         Product.objects.select_related('section_name'),
@@ -210,7 +250,7 @@ def product_detail(request, pk):
             'stock_rows': stock_rows,
         },
     )
-
+@login_required
 def warehouse_detail(request, pk):
     warehouse = get_object_or_404(
         Warehouse.objects.select_related('supermarket'),
@@ -227,6 +267,7 @@ def warehouse_detail(request, pk):
         {'warehouse': warehouse, 'stock_rows': stock_rows},
     )
 
+@login_required
 def distributor_detail(request, pk):
     item = get_object_or_404(Distributor, pk=pk)
     fields = {
@@ -236,6 +277,7 @@ def distributor_detail(request, pk):
     }
     return render(request, 'generic_detail.html', {'title': 'Distributor Details', 'icon': 'bi-building', 'list_url': 'distributor_list', 'fields': fields})
 
+@login_required
 def client_detail(request, pk):
     item = get_object_or_404(Client, pk=pk)
     fields = {
@@ -247,6 +289,7 @@ def client_detail(request, pk):
     }
     return render(request, 'generic_detail.html', {'title': 'Client Details', 'icon': 'bi-emoji-smile', 'list_url': 'client_list', 'fields': fields})
 
+@login_required
 def purchase_detail(request, pk):
     item = get_object_or_404(Purchase, pk=pk)
     
@@ -264,6 +307,7 @@ def purchase_detail(request, pk):
     }
     return render(request, 'generic_detail.html', {'title': 'Purchase Details', 'icon': 'bi-receipt', 'list_url': 'purchase_list', 'fields': fields})
 
+@login_required
 def order_detail(request, pk):
     item = get_object_or_404(Order, pk=pk)
     

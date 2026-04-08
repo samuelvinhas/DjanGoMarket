@@ -1,6 +1,6 @@
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
-from datetime import time
+from django.core.validators import MinValueValidator
+from django.contrib.auth.models import AbstractUser
 
 class Section(models.Model):
     sname = models.CharField(max_length=64, primary_key=True)
@@ -17,7 +17,7 @@ class Supermarket(models.Model):
     def __str__(self):
         return f"{self.location}"
 
-class Employee(models.Model):
+class Employee(AbstractUser):
     SEX_CHOICES = [
         ('M', 'Male'),
         ('F', 'Female'),
