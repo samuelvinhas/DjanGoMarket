@@ -396,3 +396,225 @@ def order_delete(request, pk):
         order.delete()
         return redirect('order_list')
     return render(request, 'generic_delete.html', {'item': order, 'list_url': 'order_list', 'item_name': f'Order #{order.orderid}'})
+
+@login_required
+def section_edit(request, pk):
+    section = get_object_or_404(Section, pk=pk)
+    if request.method == 'POST':
+        form = SectionForm(request.POST, is_editing=True)
+        if form.is_valid():
+            section.department = form.cleaned_data['department']
+            section.save()
+            return redirect('section_list')
+    else:
+        form = SectionForm(initial={'sname': section.sname, 'department': section.department}, is_editing=True)
+    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Section: {section.sname}', 'icon': 'bi-tags', 'list_url': 'section_list'})
+
+@login_required
+def supermarket_edit(request, pk):
+    supermarket = get_object_or_404(Supermarket, pk=pk)
+    if request.method == 'POST':
+        form = SupermarketForm(request.POST, is_editing=True)
+        if form.is_valid():
+            supermarket.location = form.cleaned_data['location']
+            supermarket.opening_time = form.cleaned_data['opening_time']
+            supermarket.close_time = form.cleaned_data['close_time']
+            supermarket.save()
+            sections = form.cleaned_data.get('sections')
+            if sections:
+                supermarket.sections.set(sections)
+            return redirect('supermarket_list')
+    else:
+        form = SupermarketForm(initial={
+            'id': supermarket.id,
+            'location': supermarket.location,
+            'opening_time': supermarket.opening_time,
+            'close_time': supermarket.close_time,
+            'sections': supermarket.sections.all()
+        }, is_editing=True)
+    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Supermarket: {supermarket.location}', 'icon': 'bi-shop', 'list_url': 'supermarket_list'})
+
+@login_required
+@role_required(allowed_roles=['CEO', 'Manager'])
+def employee_edit(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, is_editing=True)
+        if form.is_valid():
+            employee.name = form.cleaned_data['name']
+            employee.role = form.cleaned_data['role']
+            employee.salary = form.cleaned_data['salary']
+            employee.age = form.cleaned_data['age']
+            employee.contact = form.cleaned_data['contact']
+            employee.supermarket = form.cleaned_data['supermarket']
+            employee.sex = form.cleaned_data['sex']
+            employee.supervisor = form.cleaned_data['supervisor']
+            employee.save()
+            return redirect('employee_list')
+    else:
+        form = EmployeeForm(initial={
+            'enumber': employee.enumber,
+            'name': employee.name,
+            'role': employee.role,
+            'salary': employee.salary,
+            'age': employee.age,
+            'contact': employee.contact,
+            'supermarket': employee.supermarket,
+            'sex': employee.sex,
+            'supervisor': employee.supervisor
+        }, is_editing=True)
+    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Employee: {employee.name}', 'icon': 'bi-person-badge', 'list_url': 'employee_list'})
+
+@login_required
+@role_required(allowed_roles=['CEO'])
+def product_edit(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if request.method == 'POST':
+        form = ProductForm(request.POST, is_editing=True)
+        if form.is_valid():
+            product.name = form.cleaned_data['name']
+            product.brand = form.cleaned_data['brand']
+            product.price = form.cleaned_data['price']
+            product.req_cold = form.cleaned_data['req_cold']
+            product.section_name = form.cleaned_data['section_name']
+            product.save()
+            return redirect('product_list')
+    else:
+        form = ProductForm(initial={
+            'prodid': product.prodid,
+            'name': product.name,
+            'brand': product.brand,
+            'price': product.price,
+            'req_cold': product.req_cold,
+            'section_name': product.section_name
+        }, is_editing=True)
+    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Product: {product.name}', 'icon': 'bi-box-seam', 'list_url': 'product_list'})
+
+@login_required
+@role_required(allowed_roles=['CEO', 'Manager'])
+def warehouse_edit(request, pk):
+    warehouse = get_object_or_404(Warehouse, pk=pk)
+    if request.method == 'POST':
+        form = WarehouseForm(request.POST, is_editing=True)
+        if form.is_valid():
+            warehouse.area = form.cleaned_data['area']
+            warehouse.supermarket = form.cleaned_data['supermarket']
+            warehouse.save()
+            products = form.cleaned_data.get('products', [])
+            # Clear existing products and recreate with default wqty=0
+            warehouse.products.clear()
+            from .models import WareHStock
+            for product in products:
+                WareHStock.objects.create(warehouse=warehouse, product=product, wqty=0)
+            return redirect('warehouse_list')
+    else:
+        form = WarehouseForm(initial={
+            'wnumber': warehouse.wnumber,
+            'area': warehouse.area,
+            'supermarket': warehouse.supermarket,
+            'products': warehouse.products.all()
+        }, is_editing=True)
+    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Warehouse: {warehouse.wnumber}', 'icon': 'bi-boxes', 'list_url': 'warehouse_list'})
+
+@login_required
+@role_required(allowed_roles=['CEO', 'Manager'])
+def distributor_edit(request, pk):
+    distributor = get_object_or_404(Distributor, pk=pk)
+    if request.method == 'POST':
+        form = DistributorForm(request.POST, is_editing=True)
+        if form.is_valid():
+            distributor.name = form.cleaned_data['name']
+            distributor.contact = form.cleaned_data['contact']
+            distributor.save()
+            return redirect('distributor_list')
+    else:
+        form = DistributorForm(initial={
+            'email': distributor.email,
+            'contact': distributor.contact,
+            'name': distributor.name
+        }, is_editing=True)
+    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Distributor: {distributor.name}', 'icon': 'bi-building', 'list_url': 'distributor_list'})
+
+@login_required
+def client_edit(request, pk):
+    client = get_object_or_404(Client, pk=pk)
+    if request.method == 'POST':
+        form = ClientForm(request.POST, is_editing=True)
+        if form.is_valid():
+            client.name = form.cleaned_data['name']
+            client.fidelity = form.cleaned_data['fidelity']
+            client.address = form.cleaned_data['address']
+            client.contact = form.cleaned_data['contact']
+            client.save()
+            return redirect('client_list')
+    else:
+        form = ClientForm(initial={
+            'nif': client.nif,
+            'name': client.name,
+            'fidelity': client.fidelity,
+            'address': client.address,
+            'contact': client.contact
+        }, is_editing=True)
+    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Client: {client.name}', 'icon': 'bi-emoji-smile', 'list_url': 'client_list'})
+
+@login_required
+def purchase_edit(request, pk):
+    purchase = get_object_or_404(Purchase, pk=pk)
+    if request.method == 'POST':
+        form = PurchaseForm(request.POST, is_editing=True)
+        if form.is_valid():
+            purchase.date = form.cleaned_data['date']
+            purchase.supermarket = form.cleaned_data['supermarket']
+            purchase.client = form.cleaned_data['client']
+            purchase.save()
+            products = form.cleaned_data.get('products', [])
+            # Clear existing items and recreate with defaults
+            purchase.products.clear()
+            from .models import PurchaseItem
+            for product in products:
+                PurchaseItem.objects.create(
+                    purchase=purchase,
+                    product=product,
+                    quantity=1,
+                    price_at_purchase=product.price
+                )
+            return redirect('purchase_list')
+    else:
+        form = PurchaseForm(initial={
+            'purchid': purchase.purchid,
+            'date': purchase.date,
+            'supermarket': purchase.supermarket,
+            'client': purchase.client,
+            'products': purchase.products.all()
+        }, is_editing=True)
+    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Purchase: #{purchase.purchid}', 'icon': 'bi-receipt', 'list_url': 'purchase_list'})
+
+@login_required
+@role_required(allowed_roles=['CEO', 'Manager'])
+def order_edit(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    if request.method == 'POST':
+        form = OrderForm(request.POST, is_editing=True)
+        if form.is_valid():
+            order.ord_total = form.cleaned_data['ord_total']
+            order.ord_date = form.cleaned_data['ord_date']
+            order.supermarket = form.cleaned_data['supermarket']
+            order.distributor = form.cleaned_data['distributor']
+            order.save()
+            products = form.cleaned_data.get('products', [])
+            # Clear existing items and recreate with defaults
+            order.products.clear()
+            from .models import OrderItem
+            for product in products:
+                OrderItem.objects.create(order=order, product=product, quantity=1)
+            return redirect('order_list')
+    else:
+        form = OrderForm(initial={
+            'orderid': order.orderid,
+            'ord_total': order.ord_total,
+            'ord_date': order.ord_date,
+            'supermarket': order.supermarket,
+            'distributor': order.distributor,
+            'products': order.products.all()
+        }, is_editing=True)
+    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Order: #{order.orderid}', 'icon': 'bi-truck', 'list_url': 'order_list'})

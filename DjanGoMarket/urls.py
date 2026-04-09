@@ -49,6 +49,16 @@ urlpatterns = [
     path('supermarkets/<int:pk>/', views.supermarket_detail, name='supermarket_detail'),
     path('warehouses/<int:pk>/', views.warehouse_detail, name='warehouse_detail'),
 
+    path('supermarkets/<int:pk>/edit/', views.supermarket_edit, name='supermarket_edit'),
+    path('sections/<str:pk>/edit/', views.section_edit, name='section_edit'),
+    path('employees/<int:pk>/edit/', views.employee_edit, name='employee_edit'),
+    path('products/<int:pk>/edit/', views.product_edit, name='product_edit'),
+    path('warehouses/<int:pk>/edit/', views.warehouse_edit, name='warehouse_edit'),
+    path('distributors/<str:pk>/edit/', views.distributor_edit, name='distributor_edit'),
+    path('clients/<int:pk>/edit/', views.client_edit, name='client_edit'),
+    path('purchases/<int:pk>/edit/', views.purchase_edit, name='purchase_edit'),
+    path('orders/<int:pk>/edit/', views.order_edit, name='order_edit'),
+
     path('supermarkets/<int:pk>/delete/', views.supermarket_delete, name='supermarket_delete'),
     path('sections/<str:pk>/delete/', views.section_delete, name='section_delete'),
     path('employees/<int:pk>/delete/', views.employee_delete, name='employee_delete'),
