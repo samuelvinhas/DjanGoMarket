@@ -22,7 +22,8 @@
                         <th>Issue Date</th>
                         <th>Supplier</th>
                         <th>Destination</th>
-                        <th class="text-end pe-4">Invoice Total</th>
+                        <th class="text-end pe-2">Invoice Total</th>
+                        <th class="text-end pe-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -32,7 +33,15 @@
                         <td><i class="bi bi-calendar3 text-muted me-2"></i>{{ item.ord_date|date:"d M, Y" }}</td>
                         <td class="fw-semibold text-dark">{{ item.distributor.name }}</td>
                         <td>{{ item.supermarket.location }}</td>
-                        <td class="text-end pe-4 fw-bold text-dark">€{{ item.ord_total }}</td>
+                        <td class="text-end pe-2 fw-bold text-dark">€{{ item.ord_total }}</td>
+                        <td class="text-end pe-4">
+                            <a href="#" title="Edit (Coming Soon)" class="btn btn-sm" style="background-color: #c6e9a8; color: #0c3324; border: 1px solid #a8e063; cursor: not-allowed; opacity: 0.65; font-weight: 500;">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'order_delete' item.orderid %}" title="Delete" class="btn btn-sm" style="background-color: #8bda4b; color: #0c3324; border: 1px solid #6bb53a; font-weight: 500;">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>

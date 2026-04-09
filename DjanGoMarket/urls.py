@@ -48,4 +48,14 @@ urlpatterns = [
     path('sections/<str:pk>/', views.section_detail, name='section_detail'),
     path('supermarkets/<int:pk>/', views.supermarket_detail, name='supermarket_detail'),
     path('warehouses/<int:pk>/', views.warehouse_detail, name='warehouse_detail'),
+
+    path('supermarkets/<int:pk>/delete/', views.supermarket_delete, name='supermarket_delete'),
+    path('sections/<str:pk>/delete/', views.section_delete, name='section_delete'),
+    path('employees/<int:pk>/delete/', views.employee_delete, name='employee_delete'),
+    path('products/<int:pk>/delete/', views.product_delete, name='product_delete'),
+    path('warehouses/<int:pk>/delete/', views.warehouse_delete, name='warehouse_delete'),
+    path('distributors/<str:pk>/delete/', views.distributor_delete, name='distributor_delete'),
+    path('clients/<int:pk>/delete/', views.client_delete, name='client_delete'),
+    path('purchases/<int:pk>/delete/', views.purchase_delete, name='purchase_delete'),
+    path('orders/<int:pk>/delete/', views.order_delete, name='order_delete'),
 ]

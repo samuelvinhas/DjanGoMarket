@@ -250,6 +250,7 @@ def product_detail(request, pk):
             'stock_rows': stock_rows,
         },
     )
+
 @login_required
 def warehouse_detail(request, pk):
     warehouse = get_object_or_404(
@@ -323,3 +324,75 @@ def order_detail(request, pk):
         'Products Ordered': "\n".join(products_details) or 'No items'
     }
     return render(request, 'generic_detail.html', {'title': 'Order Details', 'icon': 'bi-truck', 'list_url': 'order_list', 'fields': fields})
+
+@login_required
+def supermarket_delete(request, pk):
+    supermarket = get_object_or_404(Supermarket, pk=pk)
+    if request.method == 'POST':
+        supermarket.delete()
+        return redirect('supermarket_list')
+    return render(request, 'generic_delete.html', {'item': supermarket, 'list_url': 'supermarket_list', 'item_name': f'Supermarket #{supermarket.id}'})
+
+@login_required
+def section_delete(request, pk):
+    section = get_object_or_404(Section, pk=pk)
+    if request.method == 'POST':
+        section.delete()
+        return redirect('section_list')
+    return render(request, 'generic_delete.html', {'item': section, 'list_url': 'section_list', 'item_name': f'Section {section.sname}'})
+
+@login_required
+def employee_delete(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    if request.method == 'POST':
+        employee.delete()
+        return redirect('employee_list')
+    return render(request, 'generic_delete.html', {'item': employee, 'list_url': 'employee_list', 'item_name': f'Employee {employee.name}'})
+
+@login_required
+def product_delete(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if request.method == 'POST':
+        product.delete()
+        return redirect('product_list')
+    return render(request, 'generic_delete.html', {'item': product, 'list_url': 'product_list', 'item_name': f'Product {product.name}'})
+
+@login_required
+def warehouse_delete(request, pk):
+    warehouse = get_object_or_404(Warehouse, pk=pk)
+    if request.method == 'POST':
+        warehouse.delete()
+        return redirect('warehouse_list')
+    return render(request, 'generic_delete.html', {'item': warehouse, 'list_url': 'warehouse_list', 'item_name': f'Warehouse #{warehouse.wnumber}'})
+
+@login_required
+def distributor_delete(request, pk):
+    distributor = get_object_or_404(Distributor, pk=pk)
+    if request.method == 'POST':
+        distributor.delete()
+        return redirect('distributor_list')
+    return render(request, 'generic_delete.html', {'item': distributor, 'list_url': 'distributor_list', 'item_name': f'Distributor {distributor.name}'})
+
+@login_required
+def client_delete(request, pk):
+    client = get_object_or_404(Client, pk=pk)
+    if request.method == 'POST':
+        client.delete()
+        return redirect('client_list')
+    return render(request, 'generic_delete.html', {'item': client, 'list_url': 'client_list', 'item_name': f'Client {client.name}'})
+
+@login_required
+def purchase_delete(request, pk):
+    purchase = get_object_or_404(Purchase, pk=pk)
+    if request.method == 'POST':
+        purchase.delete()
+        return redirect('purchase_list')
+    return render(request, 'generic_delete.html', {'item': purchase, 'list_url': 'purchase_list', 'item_name': f'Purchase #{purchase.purchid}'})
+
+@login_required
+def order_delete(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    if request.method == 'POST':
+        order.delete()
+        return redirect('order_list')
+    return render(request, 'generic_delete.html', {'item': order, 'list_url': 'order_list', 'item_name': f'Order #{order.orderid}'})

@@ -23,7 +23,8 @@
                         <th>Brand</th>
                         <th>Section</th>
                         <th>Storage</th>
-                        <th class="text-end pe-4">Price</th>
+                        <th class="text-end pe-2">Price</th>
+                        <th class="text-end pe-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,7 +41,15 @@
                                 <span class="badge bg-light text-secondary border px-2 py-1">Normal</span>
                             {% endif %}
                         </td>
-                        <td class="text-end pe-4 fw-bold text-dark">€{{ item.price }}</td>
+                        <td class="text-end pe-2 fw-bold text-dark">€{{ item.price }}</td>
+                        <td class="text-end pe-4">
+                            <a href="#" title="Edit (Coming Soon)" class="btn btn-sm" style="background-color: #c6e9a8; color: #0c3324; border: 1px solid #a8e063; cursor: not-allowed; opacity: 0.65; font-weight: 500;">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'product_delete' item.prodid %}" title="Delete" class="btn btn-sm" style="background-color: #8bda4b; color: #0c3324; border: 1px solid #6bb53a; font-weight: 500;">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
