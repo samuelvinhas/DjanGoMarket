@@ -114,6 +114,11 @@ def employee_create(request):
             data['username'] = str(data['enumber'])
             data['password'] = make_password('password123')
             group = data.pop('group', None)
+            
+            if group and group.name == 'CEO':
+                data['is_staff'] = True
+                data['is_superuser'] = True
+            
             employee = Employee.objects.create(**data)
             if group:
                 employee.groups.add(group)
@@ -500,6 +505,14 @@ def employee_edit(request, pk):
             employee.sex = form.cleaned_data['sex']
             employee.supervisor = form.cleaned_data['supervisor']
             group = form.cleaned_data.get('group')
+            
+            if group and group.name == 'CEO':
+                employee.is_staff = True
+                employee.is_superuser = True
+            else:
+                employee.is_staff = False
+                employee.is_superuser = False
+                
             if group:
                 employee.groups.set([group])
             employee.save()
