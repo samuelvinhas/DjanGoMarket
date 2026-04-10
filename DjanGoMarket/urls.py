@@ -48,6 +48,11 @@ urlpatterns = [
     path('sections/<str:pk>/', views.section_detail, name='section_detail'),
     path('supermarkets/<int:pk>/', views.supermarket_detail, name='supermarket_detail'),
     path('warehouses/<int:pk>/', views.warehouse_detail, name='warehouse_detail'),
+    path('employees/<int:pk>/', views.employee_detail, name='employee_detail'),
+    path('distributors/<str:pk>/', views.distributor_detail, name='distributor_detail'),
+    path('clients/<int:pk>/', views.client_detail, name='client_detail'),
+    path('purchases/<int:pk>/', views.purchase_detail, name='purchase_detail'),
+    path('orders/<int:pk>/', views.order_detail, name='order_detail'),
 
     path('supermarkets/<int:pk>/edit/', views.supermarket_edit, name='supermarket_edit'),
     path('sections/<str:pk>/edit/', views.section_edit, name='section_edit'),

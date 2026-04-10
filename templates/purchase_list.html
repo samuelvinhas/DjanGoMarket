@@ -48,7 +48,7 @@
 				</thead>
 				<tbody>
 					{% for item in purchases %}
-					<tr>
+					<tr class="table-row-link" data-href="{% url 'purchase_detail' item.purchid %}" role="button" tabindex="0">
 						<td class="text-muted">#{{ item.purchid }}</td>
 						<td>
 							<i class="bi bi-calendar3 text-muted me-2"></i>

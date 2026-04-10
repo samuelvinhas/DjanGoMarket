@@ -28,7 +28,7 @@
                 </thead>
                 <tbody>
                     {% for item in distributors %}
-                    <tr>
+                    <tr class="table-row-link" data-href="{% url 'distributor_detail' item.email %}" role="button" tabindex="0">
                         <td class="fw-semibold text-dark"><i class="bi bi-building me-2 text-muted"></i>{{ item.name }}</td>
                         <td><a href="mailto:{{ item.email }}" class="text-decoration-none"><i class="bi bi-envelope me-2 text-muted"></i>{{ item.email }}</a></td>
                         <td class="text-muted"><i class="bi bi-telephone me-2"></i>{{ item.contact|default:"-"|safe }}</td>

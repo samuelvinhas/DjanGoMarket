@@ -31,7 +31,7 @@
                 </thead>
                 <tbody>
                     {% for item in clients %}
-                    <tr>
+                    <tr class="table-row-link" data-href="{% url 'client_detail' item.nif %}" role="button" tabindex="0">
                         <td class="text-muted">{{ item.nif }}</td>
                         <td class="fw-semibold text-dark d-flex align-items-center"><i class="bi bi-person-circle fs-5 text-muted me-2"></i>{{ item.name }}</td>
                         <td>

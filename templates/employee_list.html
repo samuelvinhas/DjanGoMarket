@@ -32,7 +32,7 @@
                 </thead>
                 <tbody>
                     {% for item in employees %}
-                    <tr>
+                    <tr class="table-row-link" data-href="{% url 'employee_detail' item.enumber %}" role="button" tabindex="0">
                         <td class="text-muted">#{{ item.enumber }}</td>
                         <td class="fw-semibold text-dark d-flex align-items-center"><div class="bg-light rounded-circle text-center me-3 d-flex align-items-center justify-content-center" style="width:36px;height:36px;"><i class="bi bi-person text-secondary"></i></div>{{ item.name }}</td>
                         <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-2 py-1">{{ item.role }}</span></td>

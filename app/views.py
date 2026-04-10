@@ -113,8 +113,8 @@ def employee_create(request):
             data = form.cleaned_data.copy()
             data['username'] = str(data['enumber'])
             data['password'] = make_password('password123')
-            group = form.cleaned_data.pop('group')
-            employee = Employee.objects.create(**form.cleaned_data)
+            group = data.pop('group', None)
+            employee = Employee.objects.create(**data)
             if group:
                 employee.groups.add(group)
             return redirect('employee_list')
