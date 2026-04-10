@@ -1,6 +1,20 @@
+import decimal
 from django import forms
 from django.contrib.auth.models import Group
 from .models import Supermarket, Section, Employee, Product, Warehouse, Distributor, Client, Purchase, Order
+
+class PurchaseProductsField(forms.ModelMultipleChoiceField):
+    """Custom field to display products with their discounted prices (60% of original)"""
+    
+    def label_from_instance(self, obj):
+        return f"{obj.name} - €{obj.price:.2f}"
+
+class OrderProductsField(forms.ModelMultipleChoiceField):
+    """Custom field to display products with their discounted prices (60% of original)"""
+    
+    def label_from_instance(self, obj):
+        discounted_price = obj.price * decimal.Decimal('0.6')
+        return f"{obj.name} - €{discounted_price:.2f}"
 
 class SectionForm(forms.Form):
     sname = forms.CharField(max_length=64, label='Name')
@@ -170,7 +184,8 @@ class PurchaseForm(forms.Form):
     date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}))
     supermarket = forms.ModelChoiceField(queryset=Supermarket.objects.all())
     client = forms.ModelChoiceField(queryset=Client.objects.all(), required=False)
-    products = forms.ModelMultipleChoiceField(queryset=Product.objects.all(), required=False)
+    products = PurchaseProductsField(queryset=Product.objects.all(), required=False)
+    total = forms.DecimalField(initial=decimal.Decimal('0.00'), decimal_places=2, max_digits=12, widget=forms.TextInput(attrs={'readonly': 'readonly', 'id': 'id_purchase_total'}), required=False)
 
     def __init__(self, *args, is_editing=False, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -192,14 +207,20 @@ class PurchaseForm(forms.Form):
         if not self.is_editing and purchid and Purchase.objects.filter(purchid=purchid).exists():
             raise forms.ValidationError('A purchase with this ID already exists.')
         return purchid
+    
+    def clean_products(self):
+        products = self.cleaned_data.get('products')
+        if not products:
+            raise forms.ValidationError('At least one product must be selected.')
+        return products
 
 class OrderForm(forms.Form):
     orderid = forms.IntegerField(label='Order ID', widget=forms.TextInput(attrs={'readonly': 'readonly'}), required=False)
-    ord_total = forms.DecimalField(max_digits=10, decimal_places=2, min_value=0.01)
     ord_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     supermarket = forms.ModelChoiceField(queryset=Supermarket.objects.all())
     distributor = forms.ModelChoiceField(queryset=Distributor.objects.all())
-    products = forms.ModelMultipleChoiceField(queryset=Product.objects.all(), required=False)
+    products = OrderProductsField(queryset=Product.objects.all(), required=False)
+    total = forms.DecimalField(initial=decimal.Decimal('0.00'), decimal_places=2, max_digits=12, widget=forms.TextInput(attrs={'readonly': 'readonly', 'id': 'id_order_total'}), required=False)
 
     def __init__(self, *args, is_editing=False, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -222,3 +243,9 @@ class OrderForm(forms.Form):
         if not self.is_editing and orderid and Order.objects.filter(orderid=orderid).exists():
             raise forms.ValidationError('An order with this ID already exists.')
         return orderid
+    
+    def clean_products(self):
+        products = self.cleaned_data.get('products')
+        if not products:
+            raise forms.ValidationError('At least one product must be selected.')
+        return products

@@ -37,7 +37,7 @@
                         <td><i class="bi bi-calendar3 text-muted me-2"></i>{{ item.ord_date|date:"d M, Y" }}</td>
                         <td class="fw-semibold text-dark">{{ item.distributor.name }}</td>
                         <td>{{ item.supermarket.location }}</td>
-                        <td class="text-end pe-2 fw-bold text-dark">€{{ item.ord_total }}</td>
+                        <td class="text-end pe-2 fw-bold text-dark">€{{ item.calculated_total|floatformat:2 }}</td>
                         {% if perms.app.change_order or perms.app.delete_order %}
                         <td class="text-end pe-4">
                             {% if perms.app.change_order %}

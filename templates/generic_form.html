@@ -107,6 +107,33 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         document.head.appendChild(style);
         
+        // Extract prices from product options and store them
+        const productPrices = {};
+        Array.from(productsSelect.options).forEach(option => {
+            // Price is in the format "Product Name - €XX.XX"
+            const priceMatch = option.text.match(/€([\d.]+)$/);
+            if (priceMatch) {
+                productPrices[option.value] = parseFloat(priceMatch[1]);
+            }
+        });
+        
+        // Function to update total
+        const updateTotal = () => {
+            let total = 0;
+            const qtyInputs = document.querySelectorAll('input[name^="qty_"]');
+            qtyInputs.forEach(input => {
+                const prodId = input.name.replace('qty_', '');
+                const qty = parseInt(input.value) || 0;
+                const price = productPrices[prodId] || 0;
+                total += qty * price;
+            });
+            
+            const totalField = document.getElementById('id_order_total') || document.getElementById('id_purchase_total');
+            if (totalField) {
+                totalField.value = total.toFixed(2);
+            }
+        };
+        
         Array.from(productsSelect.options).forEach(option => {
             const prodId = option.value;
             const prodName = option.text;
@@ -158,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const updateSelection = (val) => {
                 inputQty.value = val;
                 option.selected = (val > 0);
+                updateTotal();
             };
             
             btnMinus.onclick = () => {
@@ -181,6 +209,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         productsSelect.parentNode.insertBefore(container, productsSelect.nextSibling);
+        
+        // Initial total calculation
+        updateTotal();
     }
 });
 </script>

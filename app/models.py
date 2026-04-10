@@ -1,3 +1,4 @@
+import decimal
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.contrib.auth.models import AbstractUser
@@ -110,13 +111,19 @@ class WareHStock(models.Model):
 
 class Order(models.Model):
     orderid = models.AutoField(primary_key=True)
-    ord_total = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
     ord_date = models.DateField()
     supermarket = models.ForeignKey(Supermarket, on_delete=models.CASCADE)
     distributor = models.ForeignKey(Distributor, on_delete=models.CASCADE)
     products = models.ManyToManyField(Product, through='OrderItem')
     def __str__(self):
         return f"Order {self.orderid}"
+    
+    @property
+    def calculated_total(self):
+        result = self.orderitem_set.aggregate(
+                total_cost=models.Sum(models.F('quantity') * models.F('product__price') * decimal.Decimal('0.6'))
+            )
+        return result['total_cost'] or 0.00
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)

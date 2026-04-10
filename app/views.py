@@ -13,6 +13,8 @@ from .models import (
     Purchase,
     Order,
     WareHStock,
+    PurchaseItem,
+    OrderItem
 )
 from .forms import SupermarketForm, SectionForm, EmployeeForm, ProductForm, WarehouseForm, DistributorForm, ClientForm, PurchaseForm, OrderForm
 
@@ -193,6 +195,7 @@ def purchase_create(request):
         if form.is_valid():
             products = form.cleaned_data.pop('products', [])
             form.cleaned_data.pop('purchid', None)  # Remove auto-generated field
+            form.cleaned_data.pop('total', None)  # Remove total field
             obj = Purchase.objects.create(**form.cleaned_data)
             from .models import PurchaseItem
             for prod in products:
@@ -214,9 +217,9 @@ def order_create(request):
         form = OrderForm(request.POST, user=request.user)
         if form.is_valid():
             products = form.cleaned_data.pop('products', [])
-            form.cleaned_data.pop('orderid', None)  # Remove auto-generated field
+            form.cleaned_data.pop('orderid', None)
+            form.cleaned_data.pop('total', None)  # Remove total field
             obj = Order.objects.create(**form.cleaned_data)
-            from .models import OrderItem
             for prod in products:
                 qty = request.POST.get(f'qty_{prod.prodid}', 1)
                 try:
@@ -332,14 +335,14 @@ def purchase_detail(request, pk):
     
     # Calculate details of purchase
     items = item.purchaseitem_set.all()
-    products_details = [f"{p_item.quantity}x {p_item.product.name} (at {p_item.price_at_purchase}€ each)" for p_item in items]
+    products_details = [f"{p_item.quantity}x {p_item.product.name} (at {p_item.price_at_purchase:.2f}€ each)" for p_item in items]
     
     fields = {
         'Purchase ID': item.purchid,
         'Date': item.date.strftime("%Y-%m-%d %H:%M"),
         'Supermarket': item.supermarket.location,
         'Client': item.client.name if item.client else 'Anonymous',
-        'Total Cost': f"{item.calculated_total} €",
+        'Total Cost': f"€{item.calculated_total:.2f}",
         'Products Bought': "\n".join(products_details) or 'No items'
     }
     return render(request, 'generic_detail.html', {'title': 'Purchase Details', 'icon': 'bi-receipt', 'list_url': 'purchase_list', 'fields': fields})
@@ -356,7 +359,7 @@ def order_detail(request, pk):
         'Order Date': item.ord_date.strftime("%Y-%m-%d"),
         'Supermarket': item.supermarket.location,
         'Distributor': item.distributor.name,
-        'Total Order Cost': f"{item.ord_total} €",
+        'Total Order Cost': f"€{item.calculated_total:.2f}",
         'Products Ordered': "\n".join(products_details) or 'No items'
     }
     return render(request, 'generic_detail.html', {'title': 'Order Details', 'icon': 'bi-truck', 'list_url': 'order_list', 'fields': fields})
@@ -576,7 +579,6 @@ def warehouse_edit(request, pk):
             warehouse.supermarket = form.cleaned_data['supermarket']
             warehouse.save()
             products = form.cleaned_data.get('products', [])
-            from .models import WareHStock
             current_products = set(warehouse.products.all())
             new_products = set(products)
             # remove old prods
@@ -651,7 +653,6 @@ def purchase_edit(request, pk):
             purchase.save()
             products = form.cleaned_data.get('products', [])
             
-            from .models import PurchaseItem
             new_products = set(products)
             for product in new_products:
                 # get quantity from POST data, default to 1 if not provided or invalid
@@ -692,13 +693,11 @@ def order_edit(request, pk):
     if request.method == 'POST':
         form = OrderForm(request.POST, is_editing=True, user=request.user)
         if form.is_valid():
-            order.ord_total = form.cleaned_data['ord_total']
             order.ord_date = form.cleaned_data['ord_date']
             order.supermarket = form.cleaned_data['supermarket']
             order.distributor = form.cleaned_data['distributor']
             order.save()
             products = form.cleaned_data.get('products', [])
-            from .models import OrderItem
             new_products = set(products)
             for product in new_products:
                 qty = request.POST.get(f'qty_{product.prodid}', 1)
@@ -717,7 +716,7 @@ def order_edit(request, pk):
     else:
         form = OrderForm(initial={
             'orderid': order.orderid,
-            'ord_total': order.ord_total,
+            'ord_total': order.calculated_total,
             'ord_date': order.ord_date,
             'supermarket': order.supermarket,
             'distributor': order.distributor,
