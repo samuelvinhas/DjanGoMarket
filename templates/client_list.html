@@ -5,11 +5,13 @@
     <div>
         <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-emoji-smile text-muted me-2" style="font-size: 1.5rem;"></i>Fidelity Clients</h2>
     </div>
+    {% if perms.app.add_client %}
     <div>
         <a href="{% url 'client_create' %}" class="btn" style="background-color: #8bda4b; color: #0c3324; font-weight: 600; padding: 0.5rem 1.2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(139, 218, 75, 0.2); transition: all 0.2s;">
             <i class="bi bi-plus-lg me-2" style="-webkit-text-stroke: 0.5px;"></i>Add
         </a>
     </div>
+    {% endif %}
 </div>
 
 <div class="card">
@@ -22,7 +24,9 @@
                         <th>Full Name</th>
                         <th>Fidelity Points</th>
                         <th>Contact Number</th>
+                        {% if perms.app.change_client or perms.app.delete_client %}
                         <th class="text-end pe-4">Actions</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -38,14 +42,20 @@
                             {% endif %}
                         </td>
                         <td class="text-muted">{{ item.contact }}</td>
+                        {% if perms.app.change_client or perms.app.delete_client %}
                         <td class="text-end pe-4">
+                            {% if perms.app.change_client %}
                             <a href="{% url 'client_edit' item.nif %}" title="Edit" class="btn btn-sm" style="background-color: #c6e9a8; color: #0c3324; border: 1px solid #a8e063; font-weight: 500;">
                                 <i class="bi bi-pencil"></i>
                             </a>
+                            {% endif %}
+                            {% if perms.app.delete_client %}
                             <a href="{% url 'client_delete' item.nif %}" title="Delete" class="btn btn-sm" style="background-color: #8bda4b; color: #0c3324; border: 1px solid #6bb53a; font-weight: 500;">
                                 <i class="bi bi-trash"></i>
                             </a>
+                            {% endif %}
                         </td>
+                        {% endif %}
                     </tr>
                     {% empty %}
                     <tr>

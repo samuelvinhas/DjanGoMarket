@@ -5,11 +5,13 @@
     <div>
         <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-truck text-muted me-2" style="font-size: 1.5rem;"></i>Supplier Orders</h2>
     </div>
+    {% if perms.app.add_order %}
     <div>
         <a href="{% url 'order_create' %}" class="btn" style="background-color: #8bda4b; color: #0c3324; font-weight: 600; padding: 0.5rem 1.2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(139, 218, 75, 0.2); transition: all 0.2s;">
             <i class="bi bi-plus-lg me-2" style="-webkit-text-stroke: 0.5px;"></i>Add
         </a>
     </div>
+    {% endif %}
 </div>
 
 <div class="card">
@@ -23,7 +25,9 @@
                         <th>Supplier</th>
                         <th>Destination</th>
                         <th class="text-end pe-2">Invoice Total</th>
+                        {% if perms.app.change_order or perms.app.delete_order %}
                         <th class="text-end pe-4">Actions</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -34,14 +38,20 @@
                         <td class="fw-semibold text-dark">{{ item.distributor.name }}</td>
                         <td>{{ item.supermarket.location }}</td>
                         <td class="text-end pe-2 fw-bold text-dark">€{{ item.ord_total }}</td>
+                        {% if perms.app.change_order or perms.app.delete_order %}
                         <td class="text-end pe-4">
+                            {% if perms.app.change_order %}
                             <a href="{% url 'order_edit' item.orderid %}" title="Edit" class="btn btn-sm" style="background-color: #c6e9a8; color: #0c3324; border: 1px solid #a8e063; font-weight: 500;">
                                 <i class="bi bi-pencil"></i>
                             </a>
+                            {% endif %}
+                            {% if perms.app.delete_order %}
                             <a href="{% url 'order_delete' item.orderid %}" title="Delete" class="btn btn-sm" style="background-color: #8bda4b; color: #0c3324; border: 1px solid #6bb53a; font-weight: 500;">
                                 <i class="bi bi-trash"></i>
                             </a>
+                            {% endif %}
                         </td>
+                        {% endif %}
                     </tr>
                     {% empty %}
                     <tr>

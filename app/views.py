@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from .models import (
     Supermarket,
     Section,
@@ -14,23 +14,15 @@ from .models import (
 )
 from .forms import SupermarketForm, SectionForm, EmployeeForm, ProductForm, WarehouseForm, DistributorForm, ClientForm, PurchaseForm, OrderForm
 
-def role_required(allowed_roles=[]):
-    def decorator(view_func):
-        def wrapper(request, *args, **kwargs):
-            if not request.user.is_authenticated:
-                return redirect('login')
-            if request.user.role not in allowed_roles:
-                return render(request, '403.html', status=403)
-            return view_func(request, *args, **kwargs)
-        return wrapper
-    return decorator
-
 def home(request):
     return render(request, 'home.html')
 
 @login_required
 def supermarket_list(request):
-    supermarkets = Supermarket.objects.all()
+    if request.user.groups.filter(name='CEO').exists():
+        supermarkets = Supermarket.objects.all()
+    else:
+        supermarkets = Supermarket.objects.filter(id=request.user.supermarket_id)
     return render(request, 'supermarket_list.html', {'supermarkets': supermarkets})
 
 @login_required
@@ -40,7 +32,10 @@ def section_list(request):
 
 @login_required
 def employee_list(request):
-    employees = Employee.objects.all()
+    if request.user.groups.filter(name='CEO').exists():
+        employees = Employee.objects.all()
+    else:
+        employees = Employee.objects.filter(supermarket=request.user.supermarket)
     return render(request, 'employee_list.html', {'employees': employees})
 
 @login_required
@@ -50,7 +45,10 @@ def product_list(request):
 
 @login_required
 def warehouse_list(request):
-    warehouses = Warehouse.objects.select_related('supermarket').all()
+    if request.user.groups.filter(name='CEO').exists():
+        warehouses = Warehouse.objects.select_related('supermarket').all()
+    else:
+        warehouses = Warehouse.objects.filter(supermarket=request.user.supermarket)
     return render(request, 'warehouse_list.html', {'warehouses': warehouses})
 
 @login_required
@@ -70,10 +68,14 @@ def purchase_list(request):
 
 @login_required
 def order_list(request):
-    orders = Order.objects.all()
+    if request.user.groups.filter(name='CEO').exists():
+        orders = Order.objects.all()
+    else:
+        orders = Order.objects.filter(supermarket=request.user.supermarket)
     return render(request, 'order_list.html', {'orders': orders})
 
 @login_required
+@permission_required('app.add_supermarket', raise_exception=True)
 def supermarket_create(request):
     if request.method == 'POST':
         form = SupermarketForm(request.POST)
@@ -88,7 +90,7 @@ def supermarket_create(request):
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Supermarket', 'icon': 'bi-shop', 'list_url': 'supermarket_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO'])
+@permission_required('app.add_section', raise_exception=True)
 def section_create(request):
     if request.method == 'POST':
         form = SectionForm(request.POST)
@@ -100,19 +102,19 @@ def section_create(request):
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Section', 'icon': 'bi-tags', 'list_url': 'section_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO', 'Manager'])
+@permission_required('app.add_employee', raise_exception=True)
 def employee_create(request):
     if request.method == 'POST':
-        form = EmployeeForm(request.POST)
+        form = EmployeeForm(request.POST, user=request.user)
         if form.is_valid():
             Employee.objects.create(**form.cleaned_data)
             return redirect('employee_list')
     else:
-        form = EmployeeForm()
+        form = EmployeeForm(user=request.user)
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Employee', 'icon': 'bi-person-badge', 'list_url': 'employee_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO'])
+@permission_required('app.add_product', raise_exception=True)
 def product_create(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
@@ -124,10 +126,10 @@ def product_create(request):
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Product', 'icon': 'bi-box-seam', 'list_url': 'product_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO', 'Manager'])
+@permission_required('app.add_warehouse', raise_exception=True)
 def warehouse_create(request):
     if request.method == 'POST':
-        form = WarehouseForm(request.POST)
+        form = WarehouseForm(request.POST, user=request.user)
         if form.is_valid():
             products = form.cleaned_data.pop('products', [])
             obj = Warehouse.objects.create(**form.cleaned_data)
@@ -136,11 +138,11 @@ def warehouse_create(request):
                 WareHStock.objects.create(warehouse=obj, product=prod, wqty=0)
             return redirect('warehouse_list')
     else:
-        form = WarehouseForm()
+        form = WarehouseForm(user=request.user)
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Warehouse', 'icon': 'bi-boxes', 'list_url': 'warehouse_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO', 'Manager'])
+@permission_required('app.add_distributor', raise_exception=True)
 def distributor_create(request):
     if request.method == 'POST':
         form = DistributorForm(request.POST)
@@ -152,20 +154,22 @@ def distributor_create(request):
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Distributor', 'icon': 'bi-building', 'list_url': 'distributor_list'})
 
 @login_required
+@permission_required('app.add_client', raise_exception=True)
 def client_create(request):
     if request.method == 'POST':
-        form = ClientForm(request.POST)
+        form = ClientForm(request.POST, user=request.user)
         if form.is_valid():
             Client.objects.create(**form.cleaned_data)
             return redirect('client_list')
     else:
-        form = ClientForm()
+        form = ClientForm(user=request.user)
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Client', 'icon': 'bi-emoji-smile', 'list_url': 'client_list'})
 
 @login_required
+@permission_required('app.add_purchase', raise_exception=True)
 def purchase_create(request):
     if request.method == 'POST':
-        form = PurchaseForm(request.POST)
+        form = PurchaseForm(request.POST, user=request.user)
         if form.is_valid():
             products = form.cleaned_data.pop('products', [])
             obj = Purchase.objects.create(**form.cleaned_data)
@@ -174,14 +178,14 @@ def purchase_create(request):
                 PurchaseItem.objects.create(purchase=obj, product=prod, quantity=1, price_at_purchase=prod.price)
             return redirect('purchase_list')
     else:
-        form = PurchaseForm()
+        form = PurchaseForm(user=request.user)
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Purchase', 'icon': 'bi-receipt', 'list_url': 'purchase_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO', 'Manager'])
+@permission_required('app.add_order', raise_exception=True)
 def order_create(request):
     if request.method == 'POST':
-        form = OrderForm(request.POST)
+        form = OrderForm(request.POST, user=request.user)
         if form.is_valid():
             products = form.cleaned_data.pop('products', [])
             obj = Order.objects.create(**form.cleaned_data)
@@ -190,7 +194,7 @@ def order_create(request):
                 OrderItem.objects.create(order=obj, product=prod, quantity=1)
             return redirect('order_list')
     else:
-        form = OrderForm()
+        form = OrderForm(user=request.user)
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Order', 'icon': 'bi-truck', 'list_url': 'order_list'})
 
 @login_required
@@ -326,6 +330,7 @@ def order_detail(request, pk):
     return render(request, 'generic_detail.html', {'title': 'Order Details', 'icon': 'bi-truck', 'list_url': 'order_list', 'fields': fields})
 
 @login_required
+@permission_required('app.delete_supermarket', raise_exception=True)
 def supermarket_delete(request, pk):
     supermarket = get_object_or_404(Supermarket, pk=pk)
     if request.method == 'POST':
@@ -334,6 +339,7 @@ def supermarket_delete(request, pk):
     return render(request, 'generic_delete.html', {'item': supermarket, 'list_url': 'supermarket_list', 'item_name': f'Supermarket #{supermarket.id}'})
 
 @login_required
+@permission_required('app.delete_section', raise_exception=True)
 def section_delete(request, pk):
     section = get_object_or_404(Section, pk=pk)
     if request.method == 'POST':
@@ -342,6 +348,7 @@ def section_delete(request, pk):
     return render(request, 'generic_delete.html', {'item': section, 'list_url': 'section_list', 'item_name': f'Section {section.sname}'})
 
 @login_required
+@permission_required('app.delete_employee', raise_exception=True)
 def employee_delete(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == 'POST':
@@ -350,6 +357,7 @@ def employee_delete(request, pk):
     return render(request, 'generic_delete.html', {'item': employee, 'list_url': 'employee_list', 'item_name': f'Employee {employee.name}'})
 
 @login_required
+@permission_required('app.delete_product', raise_exception=True)
 def product_delete(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
@@ -358,6 +366,7 @@ def product_delete(request, pk):
     return render(request, 'generic_delete.html', {'item': product, 'list_url': 'product_list', 'item_name': f'Product {product.name}'})
 
 @login_required
+@permission_required('app.delete_warehouse', raise_exception=True)
 def warehouse_delete(request, pk):
     warehouse = get_object_or_404(Warehouse, pk=pk)
     if request.method == 'POST':
@@ -366,6 +375,7 @@ def warehouse_delete(request, pk):
     return render(request, 'generic_delete.html', {'item': warehouse, 'list_url': 'warehouse_list', 'item_name': f'Warehouse #{warehouse.wnumber}'})
 
 @login_required
+@permission_required('app.delete_distributor', raise_exception=True)
 def distributor_delete(request, pk):
     distributor = get_object_or_404(Distributor, pk=pk)
     if request.method == 'POST':
@@ -374,6 +384,7 @@ def distributor_delete(request, pk):
     return render(request, 'generic_delete.html', {'item': distributor, 'list_url': 'distributor_list', 'item_name': f'Distributor {distributor.name}'})
 
 @login_required
+@permission_required('app.delete_client', raise_exception=True)
 def client_delete(request, pk):
     client = get_object_or_404(Client, pk=pk)
     if request.method == 'POST':
@@ -382,6 +393,7 @@ def client_delete(request, pk):
     return render(request, 'generic_delete.html', {'item': client, 'list_url': 'client_list', 'item_name': f'Client {client.name}'})
 
 @login_required
+@permission_required('app.delete_purchase', raise_exception=True)
 def purchase_delete(request, pk):
     purchase = get_object_or_404(Purchase, pk=pk)
     if request.method == 'POST':
@@ -390,6 +402,7 @@ def purchase_delete(request, pk):
     return render(request, 'generic_delete.html', {'item': purchase, 'list_url': 'purchase_list', 'item_name': f'Purchase #{purchase.purchid}'})
 
 @login_required
+@permission_required('app.delete_order', raise_exception=True)
 def order_delete(request, pk):
     order = get_object_or_404(Order, pk=pk)
     if request.method == 'POST':
@@ -398,6 +411,7 @@ def order_delete(request, pk):
     return render(request, 'generic_delete.html', {'item': order, 'list_url': 'order_list', 'item_name': f'Order #{order.orderid}'})
 
 @login_required
+@permission_required('app.change_section', raise_exception=True)
 def section_edit(request, pk):
     section = get_object_or_404(Section, pk=pk)
     if request.method == 'POST':
@@ -411,6 +425,7 @@ def section_edit(request, pk):
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Section: {section.sname}', 'icon': 'bi-tags', 'list_url': 'section_list'})
 
 @login_required
+@permission_required('app.change_supermarket', raise_exception=True)
 def supermarket_edit(request, pk):
     supermarket = get_object_or_404(Supermarket, pk=pk)
     if request.method == 'POST':
@@ -435,7 +450,7 @@ def supermarket_edit(request, pk):
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Supermarket: {supermarket.location}', 'icon': 'bi-shop', 'list_url': 'supermarket_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO', 'Manager'])
+@permission_required('app.change_employee', raise_exception=True)
 def employee_edit(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == 'POST':
@@ -466,7 +481,7 @@ def employee_edit(request, pk):
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Employee: {employee.name}', 'icon': 'bi-person-badge', 'list_url': 'employee_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO'])
+@permission_required('app.change_product', raise_exception=True)
 def product_edit(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
@@ -491,7 +506,7 @@ def product_edit(request, pk):
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Product: {product.name}', 'icon': 'bi-box-seam', 'list_url': 'product_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO', 'Manager'])
+@permission_required('app.change_warehouse', raise_exception=True)
 def warehouse_edit(request, pk):
     warehouse = get_object_or_404(Warehouse, pk=pk)
     if request.method == 'POST':
@@ -517,7 +532,7 @@ def warehouse_edit(request, pk):
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Warehouse: {warehouse.wnumber}', 'icon': 'bi-boxes', 'list_url': 'warehouse_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO', 'Manager'])
+@permission_required('app.change_distributor', raise_exception=True)
 def distributor_edit(request, pk):
     distributor = get_object_or_404(Distributor, pk=pk)
     if request.method == 'POST':
@@ -536,6 +551,7 @@ def distributor_edit(request, pk):
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Distributor: {distributor.name}', 'icon': 'bi-building', 'list_url': 'distributor_list'})
 
 @login_required
+@permission_required('app.change_client', raise_exception=True)
 def client_edit(request, pk):
     client = get_object_or_404(Client, pk=pk)
     if request.method == 'POST':
@@ -558,6 +574,7 @@ def client_edit(request, pk):
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Client: {client.name}', 'icon': 'bi-emoji-smile', 'list_url': 'client_list'})
 
 @login_required
+@permission_required('app.change_purchase', raise_exception=True)
 def purchase_edit(request, pk):
     purchase = get_object_or_404(Purchase, pk=pk)
     if request.method == 'POST':
@@ -590,7 +607,7 @@ def purchase_edit(request, pk):
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Purchase: #{purchase.purchid}', 'icon': 'bi-receipt', 'list_url': 'purchase_list'})
 
 @login_required
-@role_required(allowed_roles=['CEO', 'Manager'])
+@permission_required('app.change_order', raise_exception=True)
 def order_edit(request, pk):
     order = get_object_or_404(Order, pk=pk)
     if request.method == 'POST':

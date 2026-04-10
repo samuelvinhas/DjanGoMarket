@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.models import Group
 from .models import Supermarket, Section, Employee, Product, Warehouse, Distributor, Client, Purchase, Order
 
 class SectionForm(forms.Form):
@@ -29,6 +30,7 @@ class SupermarketForm(forms.Form):
     def __init__(self, *args, is_editing=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_editing = is_editing
+
         if is_editing:
             self.fields['id'].widget.attrs['disabled'] = 'disabled'
             self.fields['id'].widget.attrs['class'] = 'form-control-plaintext'
@@ -44,6 +46,7 @@ class EmployeeForm(forms.Form):
     SEX_CHOICES = [('M', 'Male'), ('F', 'Female')]
     enumber = forms.IntegerField(label='Employee Number')
     name = forms.CharField(max_length=64)
+    group = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label="Group")
     role = forms.CharField(max_length=32)
     salary = forms.DecimalField(max_digits=10, decimal_places=2, min_value=0.01)
     age = forms.IntegerField(min_value=16)
@@ -52,9 +55,19 @@ class EmployeeForm(forms.Form):
     sex = forms.ChoiceField(choices=SEX_CHOICES)
     supervisor = forms.ModelChoiceField(queryset=Employee.objects.all(), required=False)
 
-    def __init__(self, *args, is_editing=False, **kwargs):
+    def __init__(self, *args, is_editing=False, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_editing = is_editing
+        self.user = user
+
+        if user and not user.groups.filter(name='CEO').exists():
+            self.fields['group'].queryset = Group.objects.exclude(name='CEO')
+
+        if self.user and not self.user.groups.filter(name='CEO').exists():
+            self.fields['supermarket'].queryset = Supermarket.objects.filter(id=self.user.supermarket.id)
+            self.fields['supermarket'].initial = self.user.supermarket
+            self.fields['supermarket'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
+
         if is_editing:
             self.fields['enumber'].widget.attrs['disabled'] = 'disabled'
             self.fields['enumber'].widget.attrs['class'] = 'form-control-plaintext'
@@ -94,9 +107,16 @@ class WarehouseForm(forms.Form):
     supermarket = forms.ModelChoiceField(queryset=Supermarket.objects.all())
     products = forms.ModelMultipleChoiceField(queryset=Product.objects.all(), required=False)
 
-    def __init__(self, *args, is_editing=False, **kwargs):
+    def __init__(self, *args, is_editing=False, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_editing = is_editing
+        self.user = user
+
+        if self.user and not self.user.groups.filter(name='CEO').exists():
+            self.fields['supermarket'].queryset = Supermarket.objects.filter(id=self.user.supermarket.id)
+            self.fields['supermarket'].initial = self.user.supermarket
+            self.fields['supermarket'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
+
         if is_editing:
             self.fields['wnumber'].widget.attrs['disabled'] = 'disabled'
             self.fields['wnumber'].widget.attrs['class'] = 'form-control-plaintext'
@@ -155,9 +175,15 @@ class PurchaseForm(forms.Form):
     client = forms.ModelChoiceField(queryset=Client.objects.all(), required=False)
     products = forms.ModelMultipleChoiceField(queryset=Product.objects.all(), required=False)
 
-    def __init__(self, *args, is_editing=False, **kwargs):
+    def __init__(self, *args, is_editing=False, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_editing = is_editing
+        self.user = user
+        if self.user and not self.user.groups.filter(name='CEO').exists():
+            self.fields['supermarket'].queryset = Supermarket.objects.filter(id=self.user.supermarket.id)
+            self.fields['supermarket'].initial = self.user.supermarket
+            self.fields['supermarket'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
+
         if is_editing:
             self.fields['purchid'].widget.attrs['disabled'] = 'disabled'
             self.fields['purchid'].widget.attrs['class'] = 'form-control-plaintext'
@@ -177,9 +203,16 @@ class OrderForm(forms.Form):
     distributor = forms.ModelChoiceField(queryset=Distributor.objects.all())
     products = forms.ModelMultipleChoiceField(queryset=Product.objects.all(), required=False)
 
-    def __init__(self, *args, is_editing=False, **kwargs):
+    def __init__(self, *args, is_editing=False, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_editing = is_editing
+        self.user = user
+
+        if self.user and not self.user.groups.filter(name='CEO').exists():
+            self.fields['supermarket'].queryset = Supermarket.objects.filter(id=self.user.supermarket.id)
+            self.fields['supermarket'].initial = self.user.supermarket
+            self.fields['supermarket'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
+
         if is_editing:
             self.fields['orderid'].widget.attrs['disabled'] = 'disabled'
             self.fields['orderid'].widget.attrs['class'] = 'form-control-plaintext'
