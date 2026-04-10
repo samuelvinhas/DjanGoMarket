@@ -21,7 +21,7 @@ class SectionForm(forms.Form):
         return sname
 
 class SupermarketForm(forms.Form):
-    id = forms.IntegerField()
+    id = forms.IntegerField(label='ID', widget=forms.TextInput(attrs={'readonly': 'readonly'}), required=False)
     location = forms.CharField(max_length=128)
     opening_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}))
     close_time = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}))
@@ -31,20 +31,15 @@ class SupermarketForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.is_editing = is_editing
 
-        if is_editing:
-            self.fields['id'].widget.attrs['disabled'] = 'disabled'
-            self.fields['id'].widget.attrs['class'] = 'form-control-plaintext'
+        if not is_editing:
+            del self.fields['id']
+        else:
+            self.fields['id'].widget = forms.TextInput(attrs={'disabled': 'disabled', 'class': 'form-control-plaintext'})
             self.fields['id'].required = False
-
-    def clean_id(self):
-        id_val = self.cleaned_data.get('id')
-        if not self.is_editing and id_val and Supermarket.objects.filter(id=id_val).exists():
-            raise forms.ValidationError('A supermarket with this ID already exists.')
-        return id_val
 
 class EmployeeForm(forms.Form):
     SEX_CHOICES = [('M', 'Male'), ('F', 'Female')]
-    enumber = forms.IntegerField(label='Employee Number')
+    enumber = forms.IntegerField(label='Employee Number', widget=forms.TextInput(attrs={'readonly': 'readonly'}), required=False)
     name = forms.CharField(max_length=64)
     group = forms.ModelChoiceField(queryset=Group.objects.all(), required=True, label="Group")
     role = forms.CharField(max_length=32)
@@ -68,19 +63,14 @@ class EmployeeForm(forms.Form):
             self.fields['supermarket'].initial = self.user.supermarket
             self.fields['supermarket'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
 
-        if is_editing:
-            self.fields['enumber'].widget.attrs['disabled'] = 'disabled'
-            self.fields['enumber'].widget.attrs['class'] = 'form-control-plaintext'
+        if not is_editing:
+            del self.fields['enumber']
+        else:
+            self.fields['enumber'].widget = forms.TextInput(attrs={'disabled': 'disabled', 'class': 'form-control-plaintext'})
             self.fields['enumber'].required = False
 
-    def clean_enumber(self):
-        enumber = self.cleaned_data.get('enumber')
-        if not self.is_editing and enumber and Employee.objects.filter(enumber=enumber).exists():
-            raise forms.ValidationError('An employee with this number already exists.')
-        return enumber
-
 class ProductForm(forms.Form):
-    prodid = forms.IntegerField(label='Product ID')
+    prodid = forms.IntegerField(label='Product ID', widget=forms.TextInput(attrs={'readonly': 'readonly'}), required=False)
     name = forms.CharField(max_length=128)
     brand = forms.CharField(max_length=64)
     price = forms.DecimalField(max_digits=10, decimal_places=2, min_value=0.01)
@@ -90,9 +80,10 @@ class ProductForm(forms.Form):
     def __init__(self, *args, is_editing=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_editing = is_editing
-        if is_editing:
-            self.fields['prodid'].widget.attrs['disabled'] = 'disabled'
-            self.fields['prodid'].widget.attrs['class'] = 'form-control-plaintext'
+        if not is_editing:
+            del self.fields['prodid']
+        else:
+            self.fields['prodid'].widget = forms.TextInput(attrs={'disabled': 'disabled', 'class': 'form-control-plaintext'})
             self.fields['prodid'].required = False
 
     def clean_prodid(self):
@@ -102,7 +93,7 @@ class ProductForm(forms.Form):
         return prodid
 
 class WarehouseForm(forms.Form):
-    wnumber = forms.IntegerField(label='Warehouse Number')
+    wnumber = forms.IntegerField(label='Warehouse Number', widget=forms.TextInput(attrs={'readonly': 'readonly'}), required=False)
     area = forms.CharField(max_length=64)
     supermarket = forms.ModelChoiceField(queryset=Supermarket.objects.all())
     products = forms.ModelMultipleChoiceField(queryset=Product.objects.all(), required=False)
@@ -117,9 +108,10 @@ class WarehouseForm(forms.Form):
             self.fields['supermarket'].initial = self.user.supermarket
             self.fields['supermarket'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
 
-        if is_editing:
-            self.fields['wnumber'].widget.attrs['disabled'] = 'disabled'
-            self.fields['wnumber'].widget.attrs['class'] = 'form-control-plaintext'
+        if not is_editing:
+            del self.fields['wnumber']
+        else:
+            self.fields['wnumber'].widget = forms.TextInput(attrs={'disabled': 'disabled', 'class': 'form-control-plaintext'})
             self.fields['wnumber'].required = False
 
     def clean_wnumber(self):
@@ -154,22 +146,27 @@ class ClientForm(forms.Form):
     address = forms.CharField(max_length=128, required=False)
     contact = forms.CharField(max_length=64, required=False)
 
-    def __init__(self, *args, is_editing=False, **kwargs):
+    def __init__(self, *args, is_editing=False, client_pk=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_editing = is_editing
-        if is_editing:
-            self.fields['nif'].widget.attrs['disabled'] = 'disabled'
-            self.fields['nif'].widget.attrs['class'] = 'form-control-plaintext'
-            self.fields['nif'].required = False
+        self.client_pk = client_pk
 
     def clean_nif(self):
         nif = self.cleaned_data.get('nif')
-        if not self.is_editing and nif and Client.objects.filter(nif=nif).exists():
-            raise forms.ValidationError('A client with this NIF already exists.')
+        if not nif:
+            raise forms.ValidationError('NIF is required.')
+        
+        # Check for duplicate NIF
+        if nif:
+            query = Client.objects.filter(nif=nif)
+            if self.is_editing and self.client_pk:
+                query = query.exclude(nif=self.client_pk)
+            if query.exists():
+                raise forms.ValidationError('A client with this NIF already exists.')
         return nif
 
 class PurchaseForm(forms.Form):
-    purchid = forms.IntegerField(label='Purchase ID')
+    purchid = forms.IntegerField(label='Purchase ID', widget=forms.TextInput(attrs={'readonly': 'readonly'}), required=False)
     date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}))
     supermarket = forms.ModelChoiceField(queryset=Supermarket.objects.all())
     client = forms.ModelChoiceField(queryset=Client.objects.all(), required=False)
@@ -184,9 +181,10 @@ class PurchaseForm(forms.Form):
             self.fields['supermarket'].initial = self.user.supermarket
             self.fields['supermarket'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
 
-        if is_editing:
-            self.fields['purchid'].widget.attrs['disabled'] = 'disabled'
-            self.fields['purchid'].widget.attrs['class'] = 'form-control-plaintext'
+        if not is_editing:
+            del self.fields['purchid']
+        else:
+            self.fields['purchid'].widget = forms.TextInput(attrs={'disabled': 'disabled', 'class': 'form-control-plaintext'})
             self.fields['purchid'].required = False
 
     def clean_purchid(self):
@@ -196,7 +194,7 @@ class PurchaseForm(forms.Form):
         return purchid
 
 class OrderForm(forms.Form):
-    orderid = forms.IntegerField(label='Order ID')
+    orderid = forms.IntegerField(label='Order ID', widget=forms.TextInput(attrs={'readonly': 'readonly'}), required=False)
     ord_total = forms.DecimalField(max_digits=10, decimal_places=2, min_value=0.01)
     ord_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     supermarket = forms.ModelChoiceField(queryset=Supermarket.objects.all())
@@ -213,9 +211,10 @@ class OrderForm(forms.Form):
             self.fields['supermarket'].initial = self.user.supermarket
             self.fields['supermarket'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
 
-        if is_editing:
-            self.fields['orderid'].widget.attrs['disabled'] = 'disabled'
-            self.fields['orderid'].widget.attrs['class'] = 'form-control-plaintext'
+        if not is_editing:
+            del self.fields['orderid']
+        else:
+            self.fields['orderid'].widget = forms.TextInput(attrs={'disabled': 'disabled', 'class': 'form-control-plaintext'})
             self.fields['orderid'].required = False
 
     def clean_orderid(self):

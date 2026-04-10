@@ -83,6 +83,7 @@ def supermarket_create(request):
         form = SupermarketForm(request.POST)
         if form.is_valid():
             sections = form.cleaned_data.pop('sections')
+            form.cleaned_data.pop('id', None)  # Remove readonly auto-generated field
             obj = Supermarket.objects.create(**form.cleaned_data)
             if sections is not None:
                 obj.sections.set(sections)
@@ -109,19 +110,22 @@ def employee_create(request):
     if request.method == 'POST':
         form = EmployeeForm(request.POST, user=request.user)
         if form.is_valid():
-            # Set username from enumber and default password
+            # Extract form data
             data = form.cleaned_data.copy()
-            data['username'] = str(data['enumber'])
-            data['password'] = make_password('password123')
+            data.pop('enumber', None)  # Remove auto-generated field
             group = data.pop('group', None)
             
-            if group and group.name == 'CEO':
-                data['is_staff'] = True
-                data['is_superuser'] = True
-            
+            # Create employee to get auto-generated enumber
             employee = Employee.objects.create(**data)
+            
+            # Add group and set username using auto-generated enumber
             if group:
                 employee.groups.add(group)
+            
+            employee.username = str(employee.enumber)
+            employee.password = make_password('password123')
+            employee.save()  # Model's save() will handle is_staff/is_active for CEO
+            
             return redirect('employee_list')
     else:
         form = EmployeeForm(user=request.user)
@@ -133,6 +137,7 @@ def product_create(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
         if form.is_valid():
+            form.cleaned_data.pop('prodid', None)  # Remove auto-generated field
             Product.objects.create(**form.cleaned_data)
             return redirect('product_list')
     else:
@@ -146,6 +151,7 @@ def warehouse_create(request):
         form = WarehouseForm(request.POST, user=request.user)
         if form.is_valid():
             products = form.cleaned_data.pop('products', [])
+            form.cleaned_data.pop('wnumber', None)  # Remove auto-generated field
             obj = Warehouse.objects.create(**form.cleaned_data)
             from .models import WareHStock
             for prod in products:
@@ -171,12 +177,12 @@ def distributor_create(request):
 @permission_required('app.add_client', raise_exception=True)
 def client_create(request):
     if request.method == 'POST':
-        form = ClientForm(request.POST, user=request.user)
+        form = ClientForm(request.POST)
         if form.is_valid():
             Client.objects.create(**form.cleaned_data)
             return redirect('client_list')
     else:
-        form = ClientForm(user=request.user)
+        form = ClientForm()
     return render(request, 'generic_form.html', {'form': form, 'title': 'Add Client', 'icon': 'bi-emoji-smile', 'list_url': 'client_list'})
 
 @login_required
@@ -186,6 +192,7 @@ def purchase_create(request):
         form = PurchaseForm(request.POST, user=request.user)
         if form.is_valid():
             products = form.cleaned_data.pop('products', [])
+            form.cleaned_data.pop('purchid', None)  # Remove auto-generated field
             obj = Purchase.objects.create(**form.cleaned_data)
             from .models import PurchaseItem
             for prod in products:
@@ -207,6 +214,7 @@ def order_create(request):
         form = OrderForm(request.POST, user=request.user)
         if form.is_valid():
             products = form.cleaned_data.pop('products', [])
+            form.cleaned_data.pop('orderid', None)  # Remove auto-generated field
             obj = Order.objects.create(**form.cleaned_data)
             from .models import OrderItem
             for prod in products:
@@ -562,7 +570,7 @@ def product_edit(request, pk):
 def warehouse_edit(request, pk):
     warehouse = get_object_or_404(Warehouse, pk=pk)
     if request.method == 'POST':
-        form = WarehouseForm(request.POST, is_editing=True)
+        form = WarehouseForm(request.POST, is_editing=True, user=request.user)
         if form.is_valid():
             warehouse.area = form.cleaned_data['area']
             warehouse.supermarket = form.cleaned_data['supermarket']
@@ -584,7 +592,7 @@ def warehouse_edit(request, pk):
             'area': warehouse.area,
             'supermarket': warehouse.supermarket,
             'products': warehouse.products.all()
-        }, is_editing=True)
+        }, is_editing=True, user=request.user)
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Warehouse: {warehouse.wnumber}', 'icon': 'bi-boxes', 'list_url': 'warehouse_list'})
 
 @login_required
@@ -611,8 +619,9 @@ def distributor_edit(request, pk):
 def client_edit(request, pk):
     client = get_object_or_404(Client, pk=pk)
     if request.method == 'POST':
-        form = ClientForm(request.POST, is_editing=True)
+        form = ClientForm(request.POST, is_editing=True, client_pk=client.nif)
         if form.is_valid():
+            client.nif = form.cleaned_data['nif']
             client.name = form.cleaned_data['name']
             client.fidelity = form.cleaned_data['fidelity']
             client.address = form.cleaned_data['address']
@@ -626,7 +635,7 @@ def client_edit(request, pk):
             'fidelity': client.fidelity,
             'address': client.address,
             'contact': client.contact
-        }, is_editing=True)
+        }, is_editing=True, client_pk=client.nif)
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Client: {client.name}', 'icon': 'bi-emoji-smile', 'list_url': 'client_list'})
 
 @login_required
@@ -634,7 +643,7 @@ def client_edit(request, pk):
 def purchase_edit(request, pk):
     purchase = get_object_or_404(Purchase, pk=pk)
     if request.method == 'POST':
-        form = PurchaseForm(request.POST, is_editing=True)
+        form = PurchaseForm(request.POST, is_editing=True, user=request.user)
         if form.is_valid():
             purchase.date = form.cleaned_data['date']
             purchase.supermarket = form.cleaned_data['supermarket']
@@ -665,7 +674,7 @@ def purchase_edit(request, pk):
             'supermarket': purchase.supermarket,
             'client': purchase.client,
             'products': purchase.products.all()
-        }, is_editing=True)
+        }, is_editing=True, user=request.user)
     
     quantities = {item.product.prodid: item.quantity for item in purchase.purchaseitem_set.all()}
     return render(request, 'generic_form.html', {
@@ -681,7 +690,7 @@ def purchase_edit(request, pk):
 def order_edit(request, pk):
     order = get_object_or_404(Order, pk=pk)
     if request.method == 'POST':
-        form = OrderForm(request.POST, is_editing=True)
+        form = OrderForm(request.POST, is_editing=True, user=request.user)
         if form.is_valid():
             order.ord_total = form.cleaned_data['ord_total']
             order.ord_date = form.cleaned_data['ord_date']
@@ -713,7 +722,7 @@ def order_edit(request, pk):
             'supermarket': order.supermarket,
             'distributor': order.distributor,
             'products': order.products.all()
-        }, is_editing=True)
+        }, is_editing=True, user=request.user)
     
     quantities = {item.product.prodid: item.quantity for item in order.orderitem_set.all()}
     return render(request, 'generic_form.html', {

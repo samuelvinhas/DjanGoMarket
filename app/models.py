@@ -9,7 +9,7 @@ class Section(models.Model):
         return self.sname
 
 class Supermarket(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     location = models.CharField(max_length=128)
     opening_time = models.TimeField()
     close_time = models.TimeField()
@@ -22,7 +22,7 @@ class Employee(AbstractUser):
         ('M', 'Male'),
         ('F', 'Female'),
     ]
-    enumber = models.IntegerField(primary_key=True)
+    enumber = models.AutoField(primary_key=True)
     name = models.CharField(max_length=64)
     role = models.CharField(max_length=32)
     salary = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
@@ -45,7 +45,7 @@ class Employee(AbstractUser):
         super().save(*args, **kwargs)
 
 class Product(models.Model):
-    prodid = models.IntegerField(primary_key=True)
+    prodid = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128)
     brand = models.CharField(max_length=64)
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
@@ -55,7 +55,7 @@ class Product(models.Model):
         return self.name
 
 class Warehouse(models.Model):
-    wnumber = models.IntegerField(primary_key=True)
+    wnumber = models.AutoField(primary_key=True)
     area = models.CharField(max_length=64)
     supermarket = models.ForeignKey(Supermarket, on_delete=models.CASCADE)
     products = models.ManyToManyField(Product, through='WareHStock')
@@ -79,7 +79,7 @@ class Client(models.Model):
         return self.name or f"Client {self.nif}"
 
 class Purchase(models.Model):
-    purchid = models.IntegerField(primary_key=True)
+    purchid = models.AutoField(primary_key=True)
     date = models.DateTimeField()
     supermarket = models.ForeignKey(Supermarket, on_delete=models.CASCADE)
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
@@ -109,7 +109,7 @@ class WareHStock(models.Model):
         return f"{self.warehouse.wnumber} - {self.product.name}: {self.wqty}"
 
 class Order(models.Model):
-    orderid = models.IntegerField(primary_key=True)
+    orderid = models.AutoField(primary_key=True)
     ord_total = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
     ord_date = models.DateField()
     supermarket = models.ForeignKey(Supermarket, on_delete=models.CASCADE)
