@@ -351,6 +351,14 @@ def section_delete(request, pk):
 @permission_required('app.delete_employee', raise_exception=True)
 def employee_delete(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
+    
+    # Prevent non-CEO users from deleting CEO employees
+    is_ceo_user = request.user.groups.filter(name='CEO').exists()
+    target_is_ceo = employee.groups.filter(name='CEO').exists()
+    
+    if target_is_ceo and not is_ceo_user:
+        return render(request, '403.html', status=403)
+    
     if request.method == 'POST':
         employee.delete()
         return redirect('employee_list')
@@ -453,6 +461,14 @@ def supermarket_edit(request, pk):
 @permission_required('app.change_employee', raise_exception=True)
 def employee_edit(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
+    
+    # Prevent non-CEO users from editing CEO employees
+    is_ceo_user = request.user.groups.filter(name='CEO').exists()
+    target_is_ceo = employee.groups.filter(name='CEO').exists()
+    
+    if target_is_ceo and not is_ceo_user:
+        return render(request, '403.html', status=403)
+    
     if request.method == 'POST':
         form = EmployeeForm(request.POST, is_editing=True)
         if form.is_valid():
