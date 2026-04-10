@@ -330,6 +330,7 @@ def assign_employees_to_groups(group_map):
             employee = Employee.objects.get(enumber=enumber)
             group = Group.objects.get(name=group_name)
             employee.groups.add(group)
+            employee.save()
         
         print(f"Assigned {len(group_map)} employees to groups")
     except Group.DoesNotExist:

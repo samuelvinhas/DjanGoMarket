@@ -31,8 +31,18 @@ class Employee(AbstractUser):
     supermarket = models.ForeignKey(Supermarket, on_delete=models.CASCADE)
     sex = models.CharField(max_length=1, choices=SEX_CHOICES)
     supervisor = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='subordinates')
+
+    USERNAME_FIELD = 'enumber'
+
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        """Automatically set is_staff and is_active for CEO employees"""
+        if self.groups.filter(name='CEO').exists():
+            self.is_staff = True
+            self.is_active = True
+        super().save(*args, **kwargs)
 
 class Product(models.Model):
     prodid = models.IntegerField(primary_key=True)
