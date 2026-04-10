@@ -107,7 +107,10 @@ def employee_create(request):
     if request.method == 'POST':
         form = EmployeeForm(request.POST, user=request.user)
         if form.is_valid():
-            Employee.objects.create(**form.cleaned_data)
+            group = form.cleaned_data.pop('group')
+            employee = Employee.objects.create(**form.cleaned_data)
+            if group:
+                employee.groups.add(group)
             return redirect('employee_list')
     else:
         form = EmployeeForm(user=request.user)
@@ -470,7 +473,7 @@ def employee_edit(request, pk):
         return render(request, '403.html', status=403)
     
     if request.method == 'POST':
-        form = EmployeeForm(request.POST, is_editing=True)
+        form = EmployeeForm(request.POST, is_editing=True, user=request.user)
         if form.is_valid():
             employee.name = form.cleaned_data['name']
             employee.role = form.cleaned_data['role']
@@ -480,12 +483,16 @@ def employee_edit(request, pk):
             employee.supermarket = form.cleaned_data['supermarket']
             employee.sex = form.cleaned_data['sex']
             employee.supervisor = form.cleaned_data['supervisor']
+            group = form.cleaned_data.get('group')
+            if group:
+                employee.groups.set([group])
             employee.save()
             return redirect('employee_list')
     else:
         form = EmployeeForm(initial={
             'enumber': employee.enumber,
             'name': employee.name,
+            'group': employee.groups.first() if employee.groups.exists() else None,
             'role': employee.role,
             'salary': employee.salary,
             'age': employee.age,
@@ -493,7 +500,7 @@ def employee_edit(request, pk):
             'supermarket': employee.supermarket,
             'sex': employee.sex,
             'supervisor': employee.supervisor
-        }, is_editing=True)
+        }, is_editing=True, user=request.user)
     return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Employee: {employee.name}', 'icon': 'bi-person-badge', 'list_url': 'employee_list'})
 
 @login_required
