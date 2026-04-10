@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.hashers import make_password
+import json
 from .models import (
     Supermarket,
     Section,
@@ -107,6 +109,10 @@ def employee_create(request):
     if request.method == 'POST':
         form = EmployeeForm(request.POST, user=request.user)
         if form.is_valid():
+            # Set username from enumber and default password
+            data = form.cleaned_data.copy()
+            data['username'] = str(data['enumber'])
+            data['password'] = make_password('password123')
             group = form.cleaned_data.pop('group')
             employee = Employee.objects.create(**form.cleaned_data)
             if group:
@@ -178,7 +184,12 @@ def purchase_create(request):
             obj = Purchase.objects.create(**form.cleaned_data)
             from .models import PurchaseItem
             for prod in products:
-                PurchaseItem.objects.create(purchase=obj, product=prod, quantity=1, price_at_purchase=prod.price)
+                qty = request.POST.get(f'qty_{prod.prodid}', 1)
+                try:
+                    qty = int(qty)
+                except ValueError:
+                    qty = 1
+                PurchaseItem.objects.create(purchase=obj, product=prod, quantity=qty, price_at_purchase=prod.price)
             return redirect('purchase_list')
     else:
         form = PurchaseForm(user=request.user)
@@ -194,7 +205,12 @@ def order_create(request):
             obj = Order.objects.create(**form.cleaned_data)
             from .models import OrderItem
             for prod in products:
-                OrderItem.objects.create(order=obj, product=prod, quantity=1)
+                qty = request.POST.get(f'qty_{prod.prodid}', 1)
+                try:
+                    qty = int(qty)
+                except ValueError:
+                    qty = 1
+                OrderItem.objects.create(order=obj, product=prod, quantity=qty)
             return redirect('order_list')
     else:
         form = OrderForm(user=request.user)
@@ -539,10 +555,14 @@ def warehouse_edit(request, pk):
             warehouse.supermarket = form.cleaned_data['supermarket']
             warehouse.save()
             products = form.cleaned_data.get('products', [])
-            # Clear existing products and recreate with default wqty=0
-            warehouse.products.clear()
             from .models import WareHStock
-            for product in products:
+            current_products = set(warehouse.products.all())
+            new_products = set(products)
+            # remove old prods
+            for product in current_products - new_products:
+                WareHStock.objects.filter(warehouse=warehouse, product=product).delete()
+            # add new prods
+            for product in new_products - current_products:
                 WareHStock.objects.create(warehouse=warehouse, product=product, wqty=0)
             return redirect('warehouse_list')
     else:
@@ -608,16 +628,22 @@ def purchase_edit(request, pk):
             purchase.client = form.cleaned_data['client']
             purchase.save()
             products = form.cleaned_data.get('products', [])
-            # Clear existing items and recreate with defaults
-            purchase.products.clear()
+            
             from .models import PurchaseItem
-            for product in products:
-                PurchaseItem.objects.create(
-                    purchase=purchase,
+            new_products = set(products)
+            for product in new_products:
+                # get quantity from POST data, default to 1 if not provided or invalid
+                qty = request.POST.get(f'qty_{product.prodid}', 1)
+                try:
+                    qty = int(qty)
+                except ValueError:
+                    qty = 1
+                PurchaseItem.objects.update_or_create(
+                    purchase=purchase, 
                     product=product,
-                    quantity=1,
-                    price_at_purchase=product.price
+                    defaults={'quantity': qty, 'price_at_purchase': product.price}
                 )
+            PurchaseItem.objects.filter(purchase=purchase).exclude(product__in=new_products).delete()
             return redirect('purchase_list')
     else:
         form = PurchaseForm(initial={
@@ -627,7 +653,15 @@ def purchase_edit(request, pk):
             'client': purchase.client,
             'products': purchase.products.all()
         }, is_editing=True)
-    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Purchase: #{purchase.purchid}', 'icon': 'bi-receipt', 'list_url': 'purchase_list'})
+    
+    quantities = {item.product.prodid: item.quantity for item in purchase.purchaseitem_set.all()}
+    return render(request, 'generic_form.html', {
+        'form': form, 
+        'title': f'Edit Purchase: #{purchase.purchid}', 
+        'icon': 'bi-receipt', 
+        'list_url': 'purchase_list',
+        'initial_quantities': json.dumps(quantities)
+    })
 
 @login_required
 @permission_required('app.change_order', raise_exception=True)
@@ -642,11 +676,21 @@ def order_edit(request, pk):
             order.distributor = form.cleaned_data['distributor']
             order.save()
             products = form.cleaned_data.get('products', [])
-            # Clear existing items and recreate with defaults
-            order.products.clear()
             from .models import OrderItem
-            for product in products:
-                OrderItem.objects.create(order=order, product=product, quantity=1)
+            new_products = set(products)
+            for product in new_products:
+                qty = request.POST.get(f'qty_{product.prodid}', 1)
+                try:
+                    qty = int(qty)
+                except ValueError:
+                    qty = 1
+                
+                OrderItem.objects.update_or_create(
+                    order=order,
+                    product=product,
+                    defaults={'quantity': qty}
+                )
+            OrderItem.objects.filter(order=order).exclude(product__in=new_products).delete()
             return redirect('order_list')
     else:
         form = OrderForm(initial={
@@ -657,4 +701,12 @@ def order_edit(request, pk):
             'distributor': order.distributor,
             'products': order.products.all()
         }, is_editing=True)
-    return render(request, 'generic_form.html', {'form': form, 'title': f'Edit Order: #{order.orderid}', 'icon': 'bi-truck', 'list_url': 'order_list'})
+    
+    quantities = {item.product.prodid: item.quantity for item in order.orderitem_set.all()}
+    return render(request, 'generic_form.html', {
+        'form': form, 
+        'title': f'Edit Order: #{order.orderid}', 
+        'icon': 'bi-truck', 
+        'list_url': 'order_list',
+        'initial_quantities': json.dumps(quantities)
+    })
