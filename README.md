@@ -99,12 +99,17 @@ chmod +x migrate.sh
 ./migrate.sh
 ```
 
-5. **Populate Database with Data (Optional):**
+5. **Configure Groups:**
+```bash
+python3 setup_groups.py
+```
+
+6. **Populate Database with Data (Optional):**
 ```bash
 python3 populate_db.py
 ```
 
-6. **Run Development Server:**
+7. **Run Development Server:**
 ```bash
 python3 manage.py runserver
 ```

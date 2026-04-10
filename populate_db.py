@@ -5,12 +5,13 @@ Populate the database with sample data from ProjetoDML.sql
 """
 import os
 import django
-from django.contrib.auth.hashers import make_password
 from datetime import datetime, time
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DjanGoMarket.settings')
 django.setup()
 
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import Group
 from app.models import (
     Supermarket, Section, Employee, Product, Client,
     Purchase, PurchaseItem, Warehouse, WareHStock,
@@ -93,29 +94,32 @@ def populate_employees():
     supermarkets = {s.id: s for s in Supermarket.objects.all()}
     
     employees_data = [
-        {'enumber': 1001, 'name': 'Antonio Silva', 'role': 'Manager', 'salary': 1800.00, 'age': 42, 'contact': '910111213', 'supermarket_id': 1, 'sex': 'M', 'supervisor': None},
-        {'enumber': 1002, 'name': 'Maria Santos', 'role': 'Manager - Cashier', 'salary': 1500.00, 'age': 36, 'contact': '920222324', 'supermarket_id': 1, 'sex': 'F', 'supervisor': 1001},
-        {'enumber': 1003, 'name': 'Miguel Ferreira', 'role': 'Cashier', 'salary': 850.00, 'age': 25, 'contact': '930333435', 'supermarket_id': 1, 'sex': 'M', 'supervisor': 1002},
-        {'enumber': 1005, 'name': 'Carlos Oliveira', 'role': 'Stocker', 'salary': 800.00, 'age': 19, 'contact': '950555657', 'supermarket_id': 1, 'sex': 'M', 'supervisor': 1001},
+        {'enumber': 1000, 'name': 'Ricardo CEO', 'role': 'CEO', 'salary': 3000.00, 'age': 55, 'contact': '900000000', 'supermarket_id': 1, 'sex': 'M', 'supervisor': None, 'group': 'CEO'},
+        {'enumber': 1001, 'name': 'Antonio Silva', 'role': 'Manager', 'salary': 1800.00, 'age': 42, 'contact': '910111213', 'supermarket_id': 1, 'sex': 'M', 'supervisor': None, 'group': 'Manager'},
+        {'enumber': 1002, 'name': 'Maria Santos', 'role': 'Manager - Cashier', 'salary': 1500.00, 'age': 36, 'contact': '920222324', 'supermarket_id': 1, 'sex': 'F', 'supervisor': 1001, 'group': 'Manager'},
+        {'enumber': 1003, 'name': 'Miguel Ferreira', 'role': 'Cashier', 'salary': 850.00, 'age': 25, 'contact': '930333435', 'supermarket_id': 1, 'sex': 'M', 'supervisor': 1002, 'group': 'Cashier'},
+        {'enumber': 1005, 'name': 'Carlos Oliveira', 'role': 'Stocker', 'salary': 800.00, 'age': 19, 'contact': '950555657', 'supermarket_id': 1, 'sex': 'M', 'supervisor': 1001, 'group': 'Employee'},
 
-        {'enumber': 2001, 'name': 'Carlos Almeida', 'role': 'Manager', 'salary': 1750.00, 'age': 45, 'contact': '911121314', 'supermarket_id': 2, 'sex': 'M', 'supervisor': None},
-        {'enumber': 2002, 'name': 'Sofia Ribeiro', 'role': 'Manager - Cashier', 'salary': 1450.00, 'age': 38, 'contact': '921222324', 'supermarket_id': 2, 'sex': 'F', 'supervisor': 2001},
-        {'enumber': 2003, 'name': 'Ricardo Martins', 'role': 'Cashier', 'salary': 830.00, 'age': 22, 'contact': '931323334', 'supermarket_id': 2, 'sex': 'M', 'supervisor': 2002},
-        {'enumber': 2005, 'name': 'Miguel Sousa', 'role': 'Stocker', 'salary': 790.00, 'age': 20, 'contact': '951525354', 'supermarket_id': 2, 'sex': 'M', 'supervisor': 2001},
+        {'enumber': 2001, 'name': 'Carlos Almeida', 'role': 'Manager', 'salary': 1750.00, 'age': 45, 'contact': '911121314', 'supermarket_id': 2, 'sex': 'M', 'supervisor': None, 'group': 'Manager'},
+        {'enumber': 2002, 'name': 'Sofia Ribeiro', 'role': 'Manager - Cashier', 'salary': 1450.00, 'age': 38, 'contact': '921222324', 'supermarket_id': 2, 'sex': 'F', 'supervisor': 2001, 'group': 'Manager'},
+        {'enumber': 2003, 'name': 'Ricardo Martins', 'role': 'Cashier', 'salary': 830.00, 'age': 22, 'contact': '931323334', 'supermarket_id': 2, 'sex': 'M', 'supervisor': 2002, 'group': 'Cashier'},
+        {'enumber': 2005, 'name': 'Miguel Sousa', 'role': 'Stocker', 'salary': 790.00, 'age': 20, 'contact': '951525354', 'supermarket_id': 2, 'sex': 'M', 'supervisor': 2001, 'group': 'Employee'},
 
-        {'enumber': 3001, 'name': 'Paulo Mendes', 'role': 'Manager', 'salary': 1900.00, 'age': 47, 'contact': '912131415', 'supermarket_id': 3, 'sex': 'M', 'supervisor': None},
-        {'enumber': 3002, 'name': 'Carla Rodrigues', 'role': 'Manager - Cashier', 'salary': 1600.00, 'age': 39, 'contact': '922232425', 'supermarket_id': 3, 'sex': 'F', 'supervisor': 3001},
-        {'enumber': 3004, 'name': 'Carlota Lopes', 'role': 'Cashier', 'salary': 870.00, 'age': 27, 'contact': '942434445', 'supermarket_id': 3, 'sex': 'F', 'supervisor': 3002},
-        {'enumber': 3005, 'name': 'Hugo Dias', 'role': 'Stocker', 'salary': 820.00, 'age': 21, 'contact': '952535455', 'supermarket_id': 3, 'sex': 'M', 'supervisor': 3001},
-        {'enumber': 3007, 'name': 'Eduardo Fernandes', 'role': 'Security', 'salary': 900.00, 'age': 32, 'contact': '972737475', 'supermarket_id': 3, 'sex': 'M', 'supervisor': 3001},
+        {'enumber': 3001, 'name': 'Paulo Mendes', 'role': 'Manager', 'salary': 1900.00, 'age': 47, 'contact': '912131415', 'supermarket_id': 3, 'sex': 'M', 'supervisor': None, 'group': 'Manager'},
+        {'enumber': 3002, 'name': 'Carla Rodrigues', 'role': 'Manager - Cashier', 'salary': 1600.00, 'age': 39, 'contact': '922232425', 'supermarket_id': 3, 'sex': 'F', 'supervisor': 3001, 'group': 'Manager'},
+        {'enumber': 3004, 'name': 'Carlota Lopes', 'role': 'Cashier', 'salary': 870.00, 'age': 27, 'contact': '942434445', 'supermarket_id': 3, 'sex': 'F', 'supervisor': 3002, 'group': 'Cashier'},
+        {'enumber': 3005, 'name': 'Hugo Dias', 'role': 'Stocker', 'salary': 820.00, 'age': 21, 'contact': '952535455', 'supermarket_id': 3, 'sex': 'M', 'supervisor': 3001, 'group': 'Employee'},
+        {'enumber': 3007, 'name': 'Eduardo Fernandes', 'role': 'Security', 'salary': 900.00, 'age': 32, 'contact': '972737475', 'supermarket_id': 3, 'sex': 'M', 'supervisor': 3001, 'group': 'Employee'},
     ]
     
     employees = []
     supervisor_map = {}
+    group_map = {}
     
     # First step: create all employees without supervisors
     for emp_data in employees_data:
         supervisor_id = emp_data.pop('supervisor')
+        group_name = emp_data.pop('group')
         username = f"{emp_data['enumber']}"
         emp = Employee(
             username=username,
@@ -131,10 +135,11 @@ def populate_employees():
         )
         employees.append(emp)
         supervisor_map[emp_data['enumber']] = supervisor_id
+        group_map[emp_data['enumber']] = group_name
     
     Employee.objects.bulk_create(employees)
     
-    # Second step: update supervisors
+    # Second step: update supervisors and return group_map for group assignment
     all_employees = {e.enumber: e for e in Employee.objects.all()}
     for enumber, supervisor_id in supervisor_map.items():
         if supervisor_id:
@@ -143,6 +148,7 @@ def populate_employees():
             emp.save()
     
     print(f"Created {len(employees_data)} employees")
+    return group_map
 
 def populate_products():
     """Insert products"""
@@ -315,6 +321,24 @@ def populate_purchase_items():
     PurchaseItem.objects.bulk_create(purchase_items)
     print(f"Created {len(purchase_items)} purchase items")
 
+def assign_employees_to_groups(group_map):
+    """Assign employees to their corresponding groups using the group_map from populate_employees"""
+    print("\nAssigning employees to groups...")
+    
+    try:
+        for enumber, group_name in group_map.items():
+            employee = Employee.objects.get(enumber=enumber)
+            group = Group.objects.get(name=group_name)
+            employee.groups.add(group)
+        
+        print(f"Assigned {len(group_map)} employees to groups")
+    except Group.DoesNotExist:
+        print("Error: Groups not found. Make sure to run 'python setup_groups.py' first!")
+        raise
+    except Employee.DoesNotExist as e:
+        print(f"Error: Employee not found: {e}")
+        raise
+
 def populate():
     """Main populate function"""
     print("Starting database population...")
@@ -324,7 +348,8 @@ def populate():
         populate_sections()
         populate_store_sections()
         populate_distributors()
-        populate_employees()
+        group_map = populate_employees()
+        assign_employees_to_groups(group_map)
         populate_products()
         populate_clients()
         populate_warehouses()
