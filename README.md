@@ -26,6 +26,7 @@ Our application serves as a hub for managing supermarket operations including:
   - `Distributor` - Supplier information
   - `Client` - Customer data with fidelity program tracking
   - `Purchase` - Transaction management with multiple payment methods
+  - `Order` - Supermarket orders with discounted pricing
   - Additional junction models for M:N relationships with attributes
 
 ### 2. Django Admin Interface
@@ -34,37 +35,116 @@ Our application serves as a hub for managing supermarket operations including:
 - Pre-populated sample data available via `populate_db.py`
 
 ### 3. Form System
-- TODO: Create Django forms
+- Django forms for all main entities with custom validation
+- **Implemented Forms:**
+  - `SupermarketForm` - Manage store locations and sections
+  - `SectionForm` - Create/edit product sections
+  - `EmployeeForm` - Employee management with role assignment
+  - `ProductForm` - Product catalog management
+  - `WarehouseForm` - Warehouse and inventory management
+  - `DistributorForm` - Supplier/distributor information
+  - `ClientForm` - Customer management
+  - `PurchaseForm` - Transaction management with product selection
+  - `OrderForm` - Order management with discounted pricing (60% of original)
+- Custom field types for enhanced product display with pricing
+- Form validation with duplicate checking and data constraints
 
 ### 4. User Views & Templates
-- TODO: Create views
+- **List Views**: Display all instances of each entity with pagination
+  - Supermarket, Section, Employee, Product, Warehouse, Distributor, Client, Purchase, Order
+  - Role-based filtering (more details below)
+- **Create Views**: Form-based creation with permission decorators
+  - All entities use generic form template (`generic_form.html`)
+  - Automatic permission validation based on user group
+- **Detail Views**: Detailed information display for each entity
+  - Related data display (e.g., products in sections, stock in warehouses)
+  - Special views for complex entities (Product shows warehouse stock, Purchase shows items)
+- **Edit/Delete Views**: Manage and remove existing records
 
 ### 5. User Authentication & Authorization
-- TODO: Implement Django authentication system with:
-  - Login/registration for different user roles
-  - Role-based access control (Admin, Employee)
-  - Permission-based view restrictions
+- Django authentication system with role-based access control
+- **Django Groups System:**
+  - CEO - Full system access
+  - Manager - Supermarket-level management
+  - Cashier - Transaction and sales operations
+  - Employee - View-only access for assigned supermarket
+- Permission-based view restrictions using `@permission_required` decorators
+- Employee login using dynamic username/password (username = employee number, password = 'password123')
 
 ---
 
 ## Access Information
 
 ### Deployed Application
-- **Link**: TODO - Deploy to PythonAnywhere
-- **URL Structure**: TODO - Add deployment URL here
+- **Link**: djangomarket.pythonanywhere.com
 
 ### User Authentication Information
 
-#### Admin Account
-- **Username**: `admin`
-- **Email**: `admin@gmail.com`
-- **Password**: `adminpass123!`
-- **Access**: Django Admin Panel at `/admin/`
+#### User Roles & Permissions
 
-#### User Roles
-- **Admin**: Full system access, user management
-- **Employee**: Can't add/edit/remove, only view data
+Our system uses Django's group-based permission system to control user access. <br> 
+Here's a breakdown of each role:
 
+##### 1. CEO (Admin)
+- **Full system access and control**
+- Permissions:
+  - View all data across all supermarkets
+  - Create, edit, delete supermarkets
+  - Create, edit, delete sections globally
+  - Manage all employees across all supermarkets
+  - Create, edit, delete products
+  - Manage all warehouses
+  - Create, edit, delete distributors
+  - Manage all clients
+  - View and manage all purchases
+  - View and manage all orders
+- **Access Level:** `is_staff=True`, can access admin panel
+- **Data Scope:** Global - all supermarkets and data
+
+##### 2. Manager
+- **Supermarket-level management**
+- Permissions:
+  - View supermarket assigned to them
+  - Create and manage employees within their supermarket
+  - View and manage employees
+  - Create, edit, delete warehouse records for their supermarket
+  - Create and manage purchases
+  - Create and manage orders
+  - View products and sections (company-wide)
+- **Access Level:** Regular user, no admin panel access
+- **Data Scope:** Limited to their assigned supermarket
+
+##### 3. Cashier
+- **Sales and transaction operations**
+- Permissions:
+  - Create purchases (point of sale transactions)
+  - View purchase history
+  - View product and pricing information
+  - View orders
+- **Access Level:** Regular user, limited view access
+- **Data Scope:** Transaction-related data only
+
+##### 4. Employee
+- **View-only access**
+- Permissions:
+  - View-only access to company data
+  - Cannot create, edit, or delete any records
+  - Can view products, employees, warehouses, etc. in read-only mode
+- **Access Level:** Regular user, no modification rights
+- **Data Scope:** Limited to their supermarket (view-only)
+
+#### Demo Accounts
+
+All employees have accounts created. The following are example accounts for each role:
+
+| Role | Username | Password | ID |
+|------|----------|----------|-----|
+| CEO (Admin) | `1000` | `password123` | 1000 |
+| Manager | `1001` | `password123` | 1001 |
+| Cashier | `1002` | `password123` | 1002 |
+| Employee | `1004` | `password123` | 1004 |
+
+**Note:** Any other employee ID (e.g., 1003) with password `password123` will also work. You can create additional employees through the system and an account will be automatically generated for them with the same password.
 ---
 
 ## Configuration for Running Locally
@@ -93,7 +173,14 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. **Apply Database Migrations:**
+4. **Setup Environment Variables:**
+```bash
+chmod +x make-env.sh
+./make-env.sh
+```
+This script generates a random Django `SECRET_KEY` and creates a `.env` file with required environment variables.
+
+5. **Apply Database Migrations:**
 ```bash
 chmod +x migrate.sh
 ./migrate.sh
@@ -115,7 +202,17 @@ python3 manage.py runserver
 ```
 - Access: http://localhost:8000/
 - Admin Panel: http://localhost:8000/admin/
-TODO more
+- Supermarket Management: http://localhost:8000/supermarkets/
+- Employee Management: http://localhost:8000/employees/
+- Product Management: http://localhost:8000/products/
+- Warehouse Management: http://localhost:8000/warehouses/
+- Purchase Management: http://localhost:8000/purchases/
+- Orders Management: http://localhost:8000/orders/
+- Section Management: http://localhost:8000/sections/
+- Distributor Management: http://localhost:8000/distributors/
+- Client Management: http://localhost:8000/clients/
+
+**Attention**: More urls are available, for example http://localhost:8000/supermarkets/1/, every "item" has a detail page, so you can access http://localhost:8000/supermarkets/2/ and so on, the same applies to employees, products, warehouses, purchases, orders, sections, distributors and clients.
 
 ---
 

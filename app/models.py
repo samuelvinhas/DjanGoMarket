@@ -40,9 +40,11 @@ class Employee(AbstractUser):
     
     def save(self, *args, **kwargs):
         """Automatically set is_staff and is_active for CEO employees"""
-        if self.groups.filter(name='CEO').exists():
-            self.is_staff = True
-            self.is_active = True
+        # Only check groups if object has already been saved (has a primary key)
+        if self.pk is not None:
+            if self.groups.filter(name='CEO').exists():
+                self.is_staff = True
+                self.is_active = True
         super().save(*args, **kwargs)
 
 class Product(models.Model):
