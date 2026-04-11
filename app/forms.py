@@ -51,6 +51,14 @@ class SupermarketForm(forms.Form):
             self.fields['id'].widget = forms.TextInput(attrs={'disabled': 'disabled', 'class': 'form-control-plaintext'})
             self.fields['id'].required = False
 
+    def clean(self):
+        cleaned_data = super().clean()
+        opening = cleaned_data.get('opening_time')
+        closing = cleaned_data.get('close_time')
+        if opening and closing and closing <= opening:
+            raise forms.ValidationError("Close time must be after opening time.")
+        return cleaned_data
+
 class EmployeeForm(forms.Form):
     SEX_CHOICES = [('M', 'Male'), ('F', 'Female')]
     enumber = forms.IntegerField(label='Employee Number', widget=forms.TextInput(attrs={'readonly': 'readonly'}), required=False)
@@ -156,7 +164,7 @@ class DistributorForm(forms.Form):
 class ClientForm(forms.Form):
     nif = forms.IntegerField(label='NIF')
     name = forms.CharField(max_length=64, required=False)
-    fidelity = forms.IntegerField(required=False)
+    fidelity = forms.IntegerField(required=False, min_value=0)
     address = forms.CharField(max_length=128, required=False)
     contact = forms.CharField(max_length=64, required=False)
 
