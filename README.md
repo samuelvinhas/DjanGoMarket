@@ -142,7 +142,7 @@ All employees have accounts created. The following are example accounts for each
 | CEO (Admin) | `1000` | `password123` | 1000 |
 | Manager | `1001` | `password123` | 1001 |
 | Cashier | `1002` | `password123` | 1002 |
-| Employee | `1004` | `password123` | 1004 |
+| Employee | `1005` | `password123` | 1005 |
 
 **Note**: Any other employee ID (e.g., 1003) with password `password123` will also work. You can create additional employees through the system and an account will be automatically generated for them with the same password.
 
