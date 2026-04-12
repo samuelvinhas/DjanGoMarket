@@ -144,7 +144,8 @@ All employees have accounts created. The following are example accounts for each
 | Cashier | `1002` | `password123` | 1002 |
 | Employee | `1004` | `password123` | 1004 |
 
-**Note:** Any other employee ID (e.g., 1003) with password `password123` will also work. You can create additional employees through the system and an account will be automatically generated for them with the same password.
+**Note**: Any other employee ID (e.g., 1003) with password `password123` will also work. You can create additional employees through the system and an account will be automatically generated for them with the same password.
+
 ---
 
 ## Configuration for Running Locally
@@ -218,6 +219,17 @@ python3 manage.py runserver
 
 ## Conclusions
 
-TODO
+#### What Went Well
+The Django framework made a lot of things easier than expected. The ORM let us focus on modeling the real-world relationships between entities without worrying too much about raw SQL. 
+Setting up role-based access with Django Groups also turned out to be simpler than anticipated, and it gave the system a realistic feel - different users actually see and can do different things depending on their role.
+
+#### Limitations
+The biggest limitation is the default password setup for employees. Is obviously not something you'd ship in a real product but as this was not the main focus of the project, we went with a simple approach.
+
+#### What We'd Improve
+Given more time, the most valuable addition would probably be adding the change password functionality for employees. Besides that, if the system had lots of sections and products, the product listing pages could get unwieldy, so implementing better filtering and search capabilities would be a priority.
+
+#### Final Thoughts
+Overall, DjanGoMarket does what it set out to do. Making this project was a great experience and we believed that the final work was successful. Building a full supermarket management system from scratch using Django wasn't always straightforward, but the end result made us proud of what we accomplished.
 
 ---
