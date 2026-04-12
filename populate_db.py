@@ -321,6 +321,71 @@ def populate_purchase_items():
     PurchaseItem.objects.bulk_create(purchase_items)
     print(f"Created {len(purchase_items)} purchase items")
 
+def populate_orders():
+    """Insert orders"""
+    print("Populating orders...")
+    supermarkets = {s.id: s for s in Supermarket.objects.all()}
+    distributors = {d.email: d for d in Distributor.objects.all()}
+
+    orders_data = [
+        (5001, '2025-05-17', 1, 'beverages@dist.pt'),
+        (5002, '2025-05-20', 1, 'fresh@dist.pt'),
+        (5003, '2025-05-23', 1, 'bazar@dist.pt'),
+        (5004, '2025-05-26', 1, 'fresh@dist.pt'),
+        (6001, '2025-05-18', 2, 'fresh@dist.pt'),
+        (6002, '2025-05-22', 2, 'beverages@dist.pt'),
+        (6003, '2025-05-25', 2, 'bazar@dist.pt'),
+        (6004, '2025-05-28', 2, 'fresh@dist.pt'),
+        (7001, '2025-05-19', 3, 'bazar@dist.pt'),
+        (7002, '2025-05-24', 3, 'fresh@dist.pt'),
+        (7003, '2025-05-27', 3, 'beverages@dist.pt'),
+        (7004, '2025-05-30', 3, 'bazar@dist.pt'),
+    ]
+
+    orders = [
+        Order(
+            orderid=o[0],
+            ord_date=datetime.strptime(o[1], '%Y-%m-%d').date(),
+            supermarket=supermarkets[o[2]],
+            distributor=distributors[o[3]],
+        )
+        for o in orders_data
+    ]
+    Order.objects.bulk_create(orders)
+    print(f"Created {len(orders)} orders")
+
+def populate_order_items():
+    """Insert order items"""
+    print("Populating order items...")
+    orders = {o.orderid: o for o in Order.objects.all()}
+    products = {p.prodid: p for p in Product.objects.all()}
+
+    order_items_data = [
+        (5001, 101, 30), (5001, 102, 10),
+        (5002, 401, 20), (5002, 701, 25), (5002, 901, 35),
+        (5003, 1101, 40), (5003, 1201, 50),
+        (5004, 201, 70), (5004, 301, 45),
+        (6001, 501, 18), (6001, 601, 80), (6001, 802, 45),
+        (6002, 201, 60), (6002, 301, 55),
+        (6003, 1202, 40), (6003, 1102, 30),
+        (6004, 401, 16), (6004, 702, 20),
+        (7001, 1301, 8), (7001, 1302, 20),
+        (7002, 702, 22), (7002, 902, 28), (7002, 1202, 35),
+        (7003, 102, 12), (7003, 202, 65),
+        (7004, 901, 40), (7004, 1101, 26),
+    ]
+
+    order_items = [
+        OrderItem(
+            order=orders[item[0]],
+            product=products[item[1]],
+            quantity=item[2],
+        )
+        for item in order_items_data
+    ]
+    OrderItem.objects.bulk_create(order_items)
+    print(f"Created {len(order_items)} order items")
+
 def assign_employees_to_groups(group_map):
     """Assign employees to their corresponding groups using the group_map from populate_employees"""
     print("\nAssigning employees to groups...")
@@ -357,6 +422,8 @@ def populate():
         populate_warehouse_stock()
         populate_purchases()
         populate_purchase_items()
+        populate_orders()
+        populate_order_items()
         print("\nDatabase population completed successfully!")
     except Exception as e:
         print(f"Error during population: {e}")

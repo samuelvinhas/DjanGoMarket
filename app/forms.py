@@ -14,7 +14,7 @@ class OrderProductsField(forms.ModelMultipleChoiceField):
     
     def label_from_instance(self, obj):
         discounted_price = obj.price * decimal.Decimal('0.6')
-        return f"{obj.name} - €{discounted_price:.2f}"
+        return f"{obj.name} - €{discounted_price}"
 
 class SectionForm(forms.Form):
     sname = forms.CharField(max_length=64, label='Name')
