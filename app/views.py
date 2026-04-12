@@ -234,15 +234,18 @@ def order_create(request):
 
 @login_required
 def supermarket_detail(request, pk):
-    item = get_object_or_404(Supermarket, pk=pk)
-    fields = {
-        'ID': item.id,
-        'Location': item.location,
-        'Opening Time': item.opening_time,
-        'Closing Time': item.close_time,
-        'Sections included': ", ".join([s.sname for s in item.sections.all()]) or 'None'
-    }
-    return render(request, 'generic_detail.html', {'title': 'Supermarket Details', 'icon': 'bi-shop', 'list_url': 'supermarket_list', 'fields': fields})
+    supermarket = get_object_or_404(Supermarket.objects.prefetch_related('sections'), pk=pk)
+    employees = Employee.objects.filter(supermarket=supermarket).order_by('name')
+    warehouses = Warehouse.objects.filter(supermarket=supermarket).order_by('wnumber')
+    return render(
+        request, 
+        'supermarket_detail.html', 
+        {
+            'supermarket': supermarket, 
+            'employees': employees, 
+            'warehouses': warehouses
+        }
+    )
 
 @login_required
 def section_detail(request, pk):
@@ -256,19 +259,13 @@ def section_detail(request, pk):
 
 @login_required
 def employee_detail(request, pk):
-    item = get_object_or_404(Employee, pk=pk)
-    fields = {
-        'Employee Number': item.enumber,
-        'Name': item.name,
-        'Role': item.role,
-        'Salary': f"{item.salary} €",
-        'Age': item.age,
-        'Contact': item.contact,
-        'Supermarket': item.supermarket.location,
-        'Sex': item.get_sex_display(),
-        'Supervisor': item.supervisor.name if item.supervisor else 'None'
-    }
-    return render(request, 'generic_detail.html', {'title': 'Employee Details', 'icon': 'bi-person-badge', 'list_url': 'employee_list', 'fields': fields})
+    employee = get_object_or_404(Employee.objects.select_related('supermarket', 'supervisor'), pk=pk)
+    subordinates = Employee.objects.filter(supervisor=employee).order_by('name')
+    return render(
+        request, 
+        'employee_detail.html', 
+        {'employee': employee, 'subordinates': subordinates}
+    )
 
 @login_required
 def product_detail(request, pk):
@@ -309,60 +306,43 @@ def warehouse_detail(request, pk):
 
 @login_required
 def distributor_detail(request, pk):
-    item = get_object_or_404(Distributor, pk=pk)
-    fields = {
-        'Name': item.name,
-        'Email': item.email,
-        'Contact': item.contact or 'N/A'
-    }
-    return render(request, 'generic_detail.html', {'title': 'Distributor Details', 'icon': 'bi-building', 'list_url': 'distributor_list', 'fields': fields})
+    distributor = get_object_or_404(Distributor, pk=pk)
+    orders = Order.objects.filter(distributor=distributor).order_by('-ord_date')
+    return render(
+        request, 
+        'distributor_detail.html', 
+        {'distributor': distributor, 'orders': orders}
+    )
 
 @login_required
 def client_detail(request, pk):
-    item = get_object_or_404(Client, pk=pk)
-    fields = {
-        'NIF': item.nif,
-        'Name': item.name or 'N/A',
-        'Fidelity Points': item.fidelity or '0',
-        'Address': item.address or 'N/A',
-        'Contact': item.contact or 'N/A'
-    }
-    return render(request, 'generic_detail.html', {'title': 'Client Details', 'icon': 'bi-emoji-smile', 'list_url': 'client_list', 'fields': fields})
+    client = get_object_or_404(Client, pk=pk)
+    purchases = Purchase.objects.filter(client=client).order_by('-date')
+    return render(
+        request, 
+        'client_detail.html', 
+        {'client': client, 'purchases': purchases}
+    )
 
 @login_required
 def purchase_detail(request, pk):
-    item = get_object_or_404(Purchase, pk=pk)
-    
-    # Calculate details of purchase
-    items = item.purchaseitem_set.all()
-    products_details = [f"{p_item.quantity}x {p_item.product.name} (at {p_item.price_at_purchase:.2f}€ each)" for p_item in items]
-    
-    fields = {
-        'Purchase ID': item.purchid,
-        'Date': item.date.strftime("%Y-%m-%d %H:%M"),
-        'Supermarket': item.supermarket.location,
-        'Client': item.client.name if item.client else 'Anonymous',
-        'Total Cost': f"€{item.calculated_total:.2f}",
-        'Products Bought': "\n".join(products_details) or 'No items'
-    }
-    return render(request, 'generic_detail.html', {'title': 'Purchase Details', 'icon': 'bi-receipt', 'list_url': 'purchase_list', 'fields': fields})
+    purchase = get_object_or_404(Purchase.objects.select_related('supermarket', 'client'), pk=pk)
+    items = purchase.purchaseitem_set.select_related('product').all()
+    return render(
+        request, 
+        'purchase_detail.html', 
+        {'purchase': purchase, 'items': items}
+    )
 
 @login_required
 def order_detail(request, pk):
-    item = get_object_or_404(Order, pk=pk)
-    
-    items = item.orderitem_set.all()
-    products_details = [f"{o_item.quantity}x {o_item.product.name}" for o_item in items]
-    
-    fields = {
-        'Order ID': item.orderid,
-        'Order Date': item.ord_date.strftime("%Y-%m-%d"),
-        'Supermarket': item.supermarket.location,
-        'Distributor': item.distributor.name,
-        'Total Order Cost': f"€{item.calculated_total:.2f}",
-        'Products Ordered': "\n".join(products_details) or 'No items'
-    }
-    return render(request, 'generic_detail.html', {'title': 'Order Details', 'icon': 'bi-truck', 'list_url': 'order_list', 'fields': fields})
+    order = get_object_or_404(Order.objects.select_related('supermarket', 'distributor'), pk=pk)
+    items = order.orderitem_set.select_related('product').all()
+    return render(
+        request, 
+        'order_detail.html', 
+        {'order': order, 'items': items}
+    )
 
 @login_required
 @permission_required('app.delete_supermarket', raise_exception=True)
