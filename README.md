@@ -50,7 +50,7 @@ Our application serves as a hub for managing supermarket operations including:
 - Form validation with duplicate checking and data constraints
 
 ### 4. User Views & Templates
-- **List Views**: Display all instances of each entity with pagination
+- **List Views**: Display all instances of each entity with search bar filtering
   - Supermarket, Section, Employee, Product, Warehouse, Distributor, Client, Purchase, Order
   - Role-based filtering (more details below)
 - **Create Views**: Form-based creation with permission decorators
