@@ -59,8 +59,7 @@ ROOT_URLCONF = 'DjanGoMarket.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -125,7 +124,7 @@ USE_TZ = False
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'templates' / 'static']
+STATICFILES_DIRS = [BASE_DIR / 'app' / 'templates' / 'static']
 
 # Use Employee model for authentication
 AUTH_USER_MODEL = 'app.Employee'
