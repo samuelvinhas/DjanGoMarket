@@ -2,9 +2,9 @@
 
 ## Introduction
 
-DjanGoMarket is a web-based information system developed to help manage supermarket operations. Our system is built using **Django** platform and uses **SQLite** as the database backend with Django's Object-Relational Mapping (ORM) system. 
+DjanGoMarket TP2 extends the system built in TP1 into an n-tier architecture. The Django backend now exposes a **Django REST Framework** API, and the frontend is rewritten as an **Angular 21** single-page application. All TP1 models, business logic, and the role-based permission system are preserved - TP2 adds a REST layer on top and replaces server-rendered HTML with a proper SPA consuming JSON over HTTP.
 
-Our application serves as a hub for managing supermarket operations including:
+The system continues to cover the same supermarket management domain:
 - Employee and personnel management
 - Product inventory and warehouse organization
 - Customer purchases and transactions
@@ -13,138 +13,89 @@ Our application serves as a hub for managing supermarket operations including:
 
 ---
 
-## Main Features of our App
+## Main Features
 
-### 1. Data Model & Database Management
-- Relational database with 11 interconnected models
-- **Implemented Models:**
-  - `Supermarket` - Store locations with opening/closing times
-  - `Section` - Product sections/departments
-  - `Employee` - Staff management with roles, hierarchy (supervisor relationships), and salary tracking
-  - `Product` - Product catalog with pricing and temperature requirements
-  - `Warehouse` - Inventory storage locations
-  - `Distributor` - Supplier information
-  - `Client` - Customer data with fidelity program tracking
-  - `Purchase` - Transaction management with multiple payment methods
-  - `Order` - Supermarket orders with discounted pricing
-  - Additional junction models for M:N relationships with attributes
+### 1. REST API (Django REST Framework)
 
-### 2. Django Admin Interface
-- Admin panel for CRUD operations on all models
-- Data validation and constraints enforced at model level
-- Pre-populated sample data available via `populate_db.py`
+- Full CRUD via `ModelViewSet` for all 9 entities: Supermarket, Section, Employee, Product, Warehouse, Distributor, Client, Purchase, Order
+- **JWT authentication** via `djangorestframework-simplejwt` - login with employee number and password, receive access + refresh tokens
+- **Role-based permissions** using `DjangoModelPermissions` mapped to the same four Django groups (CEO / Manager / Cashier / Employee)
+- **Scoped querysets** - non-CEO users only see data from their own supermarket
+- **Search and ordering filters** on every endpoint (e.g., search employees by name/role, order purchases by date)
+- **Nested serializers** - purchases and orders include their line items on read; writes use a flat `item_data` list
+- `/api/me/` - current user profile including group, supermarket, and supervisor
+- `/api/me/` PATCH - self-service profile editing (name, contact, age, sex)
+- `/api/me/password/` - authenticated password change
+- `/api/health/` - unauthenticated health check
 
-### 3. Form System
-- Django forms for all main entities with custom validation
-- **Implemented Forms:**
-  - `SupermarketForm` - Manage store locations and sections
-  - `SectionForm` - Create/edit product sections
-  - `EmployeeForm` - Employee management with role assignment
-  - `ProductForm` - Product catalog management
-  - `WarehouseForm` - Warehouse and inventory management
-  - `DistributorForm` - Supplier/distributor information
-  - `ClientForm` - Customer management
-  - `PurchaseForm` - Transaction management with product selection
-  - `OrderForm` - Order management with discounted pricing (60% of original)
-- Custom field types for enhanced product display with pricing
-- Form validation with duplicate checking and data constraints
+### 2. Angular SPA
 
-### 4. User Views & Templates
-- **List Views**: Display all instances of each entity with search bar filtering
-  - Supermarket, Section, Employee, Product, Warehouse, Distributor, Client, Purchase, Order
-  - Role-based filtering (more details below)
-- **Create Views**: Form-based creation with permission decorators
-  - All entities use generic form template (`generic_form.html`)
-  - Automatic permission validation based on user group
-- **Detail Views**: Detailed information display for each entity
-  - Related data display (e.g., products in sections, stock in warehouses)
-  - Special views for complex entities (Product shows warehouse stock, Purchase shows items)
-- **Edit/Delete Views**: Manage and remove existing records
+- **Angular 21** with standalone components and lazy-loaded routes
+- Feature-based folder structure: `features/` (one folder per entity), `core/` (services, guards, interceptors, models), `shared/` (navbar)
+- Full CRUD pages for all 9 entities: list, detail, create/edit form
+- **`AuthService`** - manages JWT tokens in `localStorage`, exposes reactive user state via `BehaviorSubject`
+- **`tokenInterceptor`** - automatically attaches `Authorization: Bearer` header on every request; silently refreshes the access token on 401 and retries; redirects to login if refresh also fails
+- **`authGuard`** - blocks all routes except `/login` when no valid token is present
+- **Role-based navigation** - navbar filters entries to only what the current user's group can access
+- **Profile page** - view own employee details, edit personal info, change password
 
-### 5. User Authentication & Authorization
-- Django authentication system with role-based access control
-- **Django Groups System:**
-  - CEO - Full system access
-  - Manager - Supermarket-level management
-  - Cashier - Transaction and sales operations
-  - Employee - View-only access for assigned supermarket
-- Permission-based view restrictions using `@permission_required` decorators
-- Employee login using dynamic username/password (username = employee number, password = 'password123')
+### 3. User Authentication & Authorization
+
+- Login sends `{enumber, password}` to `/api/token/` and stores the returned JWT pair
+- All API requests carry `Authorization: Bearer <access_token>`; expired tokens are refreshed transparently in the background
+- Same four-group model as TP1, enforced at API level via Django model permissions:
+
+  - **CEO** - full CRUD across all supermarkets; `is_staff=True`, admin panel access
+  - **Manager** - full CRUD scoped to their supermarket; read-only on products, sections, distributors
+  - **Cashier** - create purchases; read-only elsewhere
+  - **Employee** - read-only across their assigned supermarket
+
+- Non-CEO users cannot edit or delete CEO employees (enforced in `EmployeeViewSet`)
 
 ---
 
 ## Access Information
 
 ### Deployed Application
-- **Link**: djangomarket.pythonanywhere.com
+- **Backend API**: djangumarket.pythonanywhere.com/api/
+- **Admin Panel**: djangumarket.pythonanywhere.com/admin/
 
-### User Authentication Information
+### User Roles & Permissions
 
-#### User Roles & Permissions
+Our system uses Django's group-based permission system to control user access.
 
-Our system uses Django's group-based permission system to control user access. <br> 
-Here's a breakdown of each role:
-
-##### 1. CEO (Admin)
-- **Full system access and control**
-- Permissions:
-  - View all data across all supermarkets
-  - Create, edit, delete supermarkets
-  - Create, edit, delete sections globally
-  - Manage all employees across all supermarkets
-  - Create, edit, delete products
-  - Manage all warehouses
-  - Create, edit, delete distributors
-  - Manage all clients
-  - View and manage all purchases
-  - View and manage all orders
-- **Access Level:** `is_staff=True`, can access admin panel
+##### CEO (Admin)
+- Full system access and control
+- View all data across all supermarkets; full CRUD on all entities
+- `is_staff=True`, can access admin panel
 - **Data Scope:** Global - all supermarkets and data
 
-##### 2. Manager
-- **Supermarket-level management**
-- Permissions:
-  - View supermarket assigned to them
-  - Create and manage employees within their supermarket
-  - View and manage employees
-  - Create, edit, delete warehouse records for their supermarket
-  - Create and manage purchases
-  - Create and manage orders
-  - View products and sections (company-wide)
-- **Access Level:** Regular user, no admin panel access
+##### Manager
+- Supermarket-level management
+- Full CRUD on employees, warehouses, purchases, orders within their supermarket
+- Read-only on products, sections, distributors
 - **Data Scope:** Limited to their assigned supermarket
 
-##### 3. Cashier
-- **Sales and transaction operations**
-- Permissions:
-  - Create purchases (point of sale transactions)
-  - View purchase history
-  - View product and pricing information
-  - View orders
-- **Access Level:** Regular user, limited view access
+##### Cashier
+- Create purchases (point of sale transactions)
+- View purchase history, products, orders
 - **Data Scope:** Transaction-related data only
 
-##### 4. Employee
-- **View-only access**
-- Permissions:
-  - View-only access to company data
-  - Cannot create, edit, or delete any records
-  - Can view products, employees, warehouses, etc. in read-only mode
-- **Access Level:** Regular user, no modification rights
+##### Employee
+- View-only access to company data
+- Cannot create, edit, or delete any records
 - **Data Scope:** Limited to their supermarket (view-only)
 
-#### Demo Accounts
+### Demo Accounts
 
-All employees have accounts created. The following are example accounts for each role:
+| Role | Username (enumber) | Password |
+|------|-------------------|----------|
+| CEO (Admin) | `1000` | `password123` |
+| Manager | `1001` | `password123` |
+| Cashier | `1002` | `password123` |
+| Employee | `1005` | `password123` |
 
-| Role | Username | Password | ID |
-|------|----------|----------|-----|
-| CEO (Admin) | `1000` | `password123` | 1000 |
-| Manager | `1001` | `password123` | 1001 |
-| Cashier | `1002` | `password123` | 1002 |
-| Employee | `1005` | `password123` | 1005 |
-
-**Note**: Any other employee ID (e.g., 1003) with password `password123` will also work. You can create additional employees through the system and an account will be automatically generated for them with the same password.
+Any other employee ID (e.g., 1003) with password `password123` will also work.
 
 ---
 
@@ -152,84 +103,61 @@ All employees have accounts created. The following are example accounts for each
 
 ### Prerequisites
 - Python 3.8+
-- Virtual Environment (venv)
+- Node.js 18+
 - Git
 
 ### Installation Steps
 
-1. **Clone/Navigate to the project:**
+1. **Clone the project:**
 ```bash
 git clone https://github.com/samuelvinhas/DjanGoMarket.git
 cd DjanGoMarket
+git checkout angular
 ```
 
-2. **Create and activate virtual environment:**
+2. **Backend setup:**
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-3. **Install dependencies:**
-```bash
+cd django
+python3 -m venv ../venv && source ../venv/bin/activate
 pip install -r requirements.txt
-```
-
-4. **Setup Environment Variables:**
-```bash
-chmod +x make-env.sh
 ./make-env.sh
-```
-This script generates a random Django `SECRET_KEY` and creates a `.env` file with required environment variables.
-
-5. **Apply Database Migrations:**
-```bash
-chmod +x migrate.sh
 ./migrate.sh
-```
-
-5. **Configure Groups:**
-```bash
 python3 setup_groups.py
-```
-
-6. **Populate Database with Data (Optional):**
-```bash
-python3 populate_db.py
-```
-
-7. **Run Development Server:**
-```bash
+python3 populate_db.py   # optional
 python3 manage.py runserver
 ```
-- Access: http://localhost:8000/
-- Admin Panel: http://localhost:8000/admin/
-- Supermarket Management: http://localhost:8000/supermarkets/
-- Employee Management: http://localhost:8000/employees/
-- Product Management: http://localhost:8000/products/
-- Warehouse Management: http://localhost:8000/warehouses/
-- Purchase Management: http://localhost:8000/purchases/
-- Orders Management: http://localhost:8000/orders/
-- Section Management: http://localhost:8000/sections/
-- Distributor Management: http://localhost:8000/distributors/
-- Client Management: http://localhost:8000/clients/
 
-**Attention**: More urls are available, for example http://localhost:8000/supermarkets/1/, every "item" has a detail page, so you can access http://localhost:8000/supermarkets/2/ and so on, the same applies to employees, products, warehouses, purchases, orders, sections, distributors and clients.
+3. **Frontend setup (new terminal):**
+```bash
+cd angular
+npm install
+npm start
+```
+
+- Angular UI: http://localhost:4200
+- API: http://localhost:8000/api/
+- Admin Panel: http://localhost:8000/admin/
+
+**Windows**: double-click `run-dev.cmd` or run `run-dev.ps1`. First-time setup: `setup.cmd` or `setup.ps1`.
 
 ---
 
 ## Conclusions
 
 #### What Went Well
-The Django framework made a lot of things easier than expected. The ORM let us focus on modeling the real-world relationships between entities without worrying too much about raw SQL. 
-Setting up role-based access with Django Groups also turned out to be simpler than anticipated, and it gave the system a realistic feel - different users actually see and can do different things depending on their role.
+
+Splitting the backend and frontend into separate tiers was cleaner than expected. DRF's `ModelViewSet` covers most of the boilerplate for a CRUD API, and the existing Django group/permission model mapped directly onto DRF's permission classes without any changes to how groups work. The Angular interceptor handling silent token refresh meant the rest of the app could ignore token expiry entirely.
+
+Reusing all models and business logic from TP1 without touching them was a good call - it kept the scope of TP2 focused on the new layer rather than revisiting old ground.
 
 #### Limitations
-The biggest limitation is the default password setup for employees. Is obviously not something you'd ship in a real product but as this was not the main focus of the project, we went with a simple approach.
+
+The biggest limitation remains the default password setup for employees - obviously not something we would ship in a real product, but as this was not the main focus of the project, we went with a simple approach. In the previous project (TP1) we had no option to change that password, to make this limitation less severe, in TP2 we added a password change endpoint and UI for users to update their own password after logging in with the default one.
 
 #### What We'd Improve
-Given more time, the most valuable addition would probably be adding the change password functionality for employees. Besides that, if the system had lots of sections and products, the product listing pages could get unwieldy, so implementing better filtering and search capabilities would be a priority.
+
+Server-side pagination would be worth adding for larger datasets - currently all records are fetched at once. Better tests like end-to-end tests for the Angular app would also be a great addition.
 
 #### Final Thoughts
-Overall, DjanGoMarket does what it set out to do. Making this project was a great experience and we believed that the final work was successful. Building a full supermarket management system from scratch using Django wasn't always straightforward, but the end result made us proud of what we accomplished.
 
----
+Overall, DjanGoMarket does what it set out to do. Building a full supermarket management system and then converting it to a proper n-tier architecture was a great learning experience.

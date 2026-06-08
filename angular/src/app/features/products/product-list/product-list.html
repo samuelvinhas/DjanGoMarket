@@ -1,0 +1,62 @@
+<div class="container mt-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="fw-bold mb-0 text-dark">
+      <i class="bi bi-box-seam text-muted me-2" style="font-size: 1.5rem"></i>Products
+    </h2>
+    @if (canWrite) {
+      <a routerLink="/products/new" class="btn btn-add">
+        <i class="bi bi-plus-lg me-2"></i>Add
+      </a>
+    }
+  </div>
+  @if (error) {
+    <div class="alert alert-warning">{{ error }} <button type="button" class="btn btn-sm btn-outline-dark ms-2" (click)="load()">Retry</button></div>
+  }
+  <input class="form-control mb-3" placeholder="Search by name or brand..." [(ngModel)]="search" (input)="applyFilter()" />
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr><th>#</th><th>Name</th><th>Brand</th><th>Price</th><th>Section</th><th>Cold</th><th class="text-end pe-4">Actions</th></tr>
+          </thead>
+          <tbody>
+            @for (p of filtered; track p.prodid) {
+              <tr class="clickable-row" [routerLink]="['/products', p.prodid]">
+                <td class="text-muted">#{{ p.prodid }}</td>
+                <td class="fw-semibold text-dark">{{ p.name }}</td>
+                <td>{{ p.brand }}</td>
+                <td>{{ p.price | number:'1.2-2' }} €</td>
+                <td>{{ p.section ?? p.section_name }}</td>
+                <td>{{ p.req_cold ? 'Yes' : 'No' }}</td>
+                <td class="text-end pe-4" (click)="$event.stopPropagation()">
+                  @if (canWrite) {
+                    @if (pendingDelete === p.prodid) {
+                      <span class="text-muted small me-2">Delete?</span>
+                      <button class="btn btn-sm btn-danger me-1" (click)="confirmDelete(p.prodid)">Yes</button>
+                      <button class="btn btn-sm btn-outline-secondary" (click)="cancelDelete()">No</button>
+                    } @else {
+                      <a [routerLink]="['/products', p.prodid, 'edit']" class="btn btn-sm btn-edit me-1"><i class="bi bi-pencil"></i></a>
+                      <button class="btn btn-sm btn-delete" (click)="requestDelete(p.prodid)"><i class="bi bi-trash"></i></button>
+                    }
+                  }
+                </td>
+              </tr>
+            }
+            @empty {
+              @if (!loading && !error) {
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-5 border-0">
+                    <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                    <h5 class="fw-normal">No products found</h5>
+                    <p class="small">There are currently no records available in this section.</p>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
